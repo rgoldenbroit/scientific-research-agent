@@ -2,7 +2,95 @@
 Tools for the Scientific Research Agent.
 Each tool represents a core capability.
 """
+import json
+import os
 import random
+import uuid
+from datetime import datetime
+
+from google.cloud import storage
+
+# GCS bucket for storing generated data - set via environment variable
+DATA_BUCKET = os.environ.get("AGENT_DATA_BUCKET", "")
+
+
+def _get_storage_client():
+    """Get a GCS storage client."""
+    return storage.Client()
+
+
+def _upload_to_gcs(data: dict, filename: str) -> str:
+    """Upload data to GCS and return the gs:// URI."""
+    if not DATA_BUCKET:
+        return ""
+
+    client = _get_storage_client()
+    bucket = client.bucket(DATA_BUCKET)
+    blob = bucket.blob(f"datasets/{filename}")
+
+    blob.upload_from_string(
+        json.dumps(data, indent=2),
+        content_type="application/json"
+    )
+
+    return f"gs://{DATA_BUCKET}/datasets/{filename}"
+
+
+def _download_from_gcs(gcs_path: str) -> dict:
+    """Download and parse JSON data from GCS."""
+    # Parse gs:// URI
+    if not gcs_path.startswith("gs://"):
+        raise ValueError(f"Invalid GCS path: {gcs_path}")
+
+    path_parts = gcs_path[5:].split("/", 1)
+    bucket_name = path_parts[0]
+    blob_path = path_parts[1] if len(path_parts) > 1 else ""
+
+    client = _get_storage_client()
+    bucket = client.bucket(bucket_name)
+    blob = bucket.blob(blob_path)
+
+    content = blob.download_as_text()
+    return json.loads(content)
+
+
+def list_datasets(bucket_name: str = None) -> dict:
+    """
+    List available datasets in the GCS bucket.
+
+    Args:
+        bucket_name: Optional bucket name override. Uses default if not provided.
+
+    Returns:
+        dict containing list of available datasets with metadata
+    """
+    bucket = bucket_name or DATA_BUCKET
+    if not bucket:
+        return {
+            "status": "error",
+            "message": "No data bucket configured. Set AGENT_DATA_BUCKET environment variable."
+        }
+
+    client = _get_storage_client()
+    gcs_bucket = client.bucket(bucket)
+    blobs = gcs_bucket.list_blobs(prefix="datasets/")
+
+    datasets = []
+    for blob in blobs:
+        if blob.name.endswith(".json"):
+            datasets.append({
+                "name": blob.name.split("/")[-1],
+                "path": f"gs://{bucket}/{blob.name}",
+                "size_bytes": blob.size,
+                "created": blob.time_created.isoformat() if blob.time_created else None
+            })
+
+    return {
+        "status": "success",
+        "bucket": bucket,
+        "dataset_count": len(datasets),
+        "datasets": datasets
+    }
 
 
 def generate_synthetic_data(
@@ -88,7 +176,8 @@ def generate_synthetic_data(
 
             data_rows.append(row)
 
-    return {
+    # Create result with metadata
+    result = {
         "status": "data_generated",
         "data_type": data_type,
         "num_samples_per_group": num_samples,
@@ -101,6 +190,19 @@ def generate_synthetic_data(
         "data": data_rows,
         "csv_format": "sample_id,group," + ",".join(config["features"])
     }
+
+    # Save to GCS if bucket is configured
+    if DATA_BUCKET:
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"{data_type}_{timestamp}_{uuid.uuid4().hex[:8]}.json"
+        gcs_path = _upload_to_gcs(result, filename)
+        result["gcs_path"] = gcs_path
+        result["storage_status"] = "saved_to_gcs"
+    else:
+        result["gcs_path"] = None
+        result["storage_status"] = "not_saved_no_bucket_configured"
+
+    return result
 
 def generate_hypotheses(
     research_topic: str,
@@ -129,25 +231,66 @@ def generate_hypotheses(
 def analyze_experimental_data(
     data_description: str,
     data_format: str,
-    analysis_type: str = "exploratory"
+    analysis_type: str = "exploratory",
+    gcs_path: str = None
 ) -> dict:
     """
     Analyze experimental results to extract meaningful insights.
-    
+
     Args:
         data_description: Description of the experimental data and its structure
         data_format: Format of the data (e.g., 'tabular', 'time_series', 'categorical')
         analysis_type: Type of analysis - 'exploratory', 'statistical', or 'comparative'
-    
+        gcs_path: Optional GCS path (gs://...) to load data from
+
     Returns:
-        dict containing analysis framework and key questions to address
+        dict containing analysis framework, loaded data (if gcs_path provided), and guidance
     """
-    return {
+    result = {
         "status": "ready_for_analysis",
         "data_format": data_format,
         "analysis_type": analysis_type,
         "framework": "statistical" if analysis_type == "statistical" else "descriptive"
     }
+
+    # Load data from GCS if path provided
+    if gcs_path:
+        try:
+            loaded_data = _download_from_gcs(gcs_path)
+            result["data_loaded"] = True
+            result["gcs_path"] = gcs_path
+            result["data_type"] = loaded_data.get("data_type", "unknown")
+            result["features"] = loaded_data.get("features", [])
+            result["groups"] = loaded_data.get("groups", [])
+            result["total_samples"] = loaded_data.get("total_samples", 0)
+            result["data"] = loaded_data.get("data", [])
+
+            # Calculate basic statistics for each feature by group
+            if result["data"] and result["features"]:
+                stats_by_group = {}
+                for group in result["groups"]:
+                    group_data = [row for row in result["data"] if row.get("group") == group]
+                    group_stats = {}
+                    for feature in result["features"]:
+                        values = [row[feature] for row in group_data if feature in row]
+                        if values:
+                            group_stats[feature] = {
+                                "mean": round(sum(values) / len(values), 3),
+                                "min": round(min(values), 3),
+                                "max": round(max(values), 3),
+                                "n": len(values)
+                            }
+                    stats_by_group[group] = group_stats
+                result["statistics_by_group"] = stats_by_group
+
+        except Exception as e:
+            result["data_loaded"] = False
+            result["error"] = str(e)
+    else:
+        result["data_loaded"] = False
+        result["note"] = "No GCS path provided. Provide gcs_path to load and analyze stored data."
+
+    return result
 
 
 def prepare_research_report(

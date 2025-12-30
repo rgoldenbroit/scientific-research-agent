@@ -20,6 +20,7 @@ from agent.main import app
 PROJECT_ID = "YOUR_WORK_PROJECT_ID"      # Replace with your work GCP project ID
 LOCATION = "us-central1"                  # Or your preferred region
 STAGING_BUCKET = f"gs://{PROJECT_ID}-agent-staging"
+DATA_BUCKET = f"{PROJECT_ID}-agent-data"  # Bucket for storing generated datasets
 
 # =============================================================================
 # DEPLOYMENT
@@ -30,6 +31,7 @@ def main():
     print(f"   Project: {PROJECT_ID}")
     print(f"   Location: {LOCATION}")
     print(f"   Staging Bucket: {STAGING_BUCKET}")
+    print(f"   Data Bucket: {DATA_BUCKET}")
     print()
     
     # Initialize Vertex AI client
@@ -47,11 +49,15 @@ def main():
             "requirements": [
                 "google-cloud-aiplatform[agent_engines,adk]>=1.112",
                 "google-adk",
+                "google-cloud-storage",
                 "cloudpickle",
                 "pydantic"
             ],
             "extra_packages": ["./agent"],
             "staging_bucket": STAGING_BUCKET,
+            "env_vars": {
+                "AGENT_DATA_BUCKET": DATA_BUCKET
+            }
         }
     )
     
@@ -68,10 +74,13 @@ def main():
     print(f"Resource ID: {resource_id}")
     print()
     print("📋 NEXT STEPS:")
-    print("   1. Go to Google Cloud Console → Gemini Enterprise")
-    print("   2. Select your app → Agents → Add Agents")
-    print("   3. Choose 'Custom agent via Agent Engine'")
-    print("   4. Paste this Reasoning Engine path:")
+    print(f"   1. Create data bucket (if not exists):")
+    print(f"      gsutil mb -l {LOCATION} gs://{DATA_BUCKET}")
+    print()
+    print("   2. Go to Google Cloud Console → Gemini Enterprise")
+    print("   3. Select your app → Agents → Add Agents")
+    print("   4. Choose 'Custom agent via Agent Engine'")
+    print("   5. Paste this Reasoning Engine path:")
     print()
     print(f"      {resource_name}")
     print()
