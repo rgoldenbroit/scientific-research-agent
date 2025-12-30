@@ -50,6 +50,7 @@ def main():
                 "cloudpickle",
                 "pydantic"
             ],
+            "extra_packages": ["./agent"],
             "staging_bucket": STAGING_BUCKET,
         }
     )
