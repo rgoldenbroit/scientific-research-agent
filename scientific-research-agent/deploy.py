@@ -46,7 +46,9 @@ def main():
         config={
             "requirements": [
                 "google-cloud-aiplatform[agent_engines,adk]>=1.112",
-                "google-adk"
+                "google-adk",
+                "cloudpickle",
+                "pydantic"
             ],
             "staging_bucket": STAGING_BUCKET,
         }
