@@ -3,8 +3,8 @@ Scientific Research Agent - Main Definition
 Combines ideation, analysis, and reporting capabilities.
 """
 
-from google.adk.agents import Agent
-from google.adk.tools import code_interpreter
+from google.adk.agents import Agent, LlmAgent
+from google.adk.code_executors import BuiltInCodeExecutor
 from vertexai.agent_engines import AdkApp
 from . import tools
 
@@ -58,17 +58,17 @@ When the user asks to analyze data without providing all parameters:
 
 ## 5. VISUALIZATION MODE
 When a user wants to visualize data or see charts:
-- Use code execution to generate matplotlib visualizations
-- Write Python code that:
-  - Loads data from GCS using google.cloud.storage
-  - Creates appropriate plots (bar charts, box plots, heatmaps, scatter plots)
-  - Uses clear labels, titles, and legends
+- Delegate to the visualization_agent by transferring the request
+- Provide the visualization_agent with:
+  - The GCS path to the data
+  - The type of visualization requested (bar chart, box plot, heatmap, etc.)
+  - Any specific requirements (grouping, colors, labels)
+- The visualization_agent will execute matplotlib code and return charts as inline images
 - Recommended visualizations by data type:
   - Group comparisons: Bar plots with error bars, box plots
   - Distributions: Histograms, violin plots
   - Correlations: Heatmaps, scatter matrices
   - Time series: Line plots with confidence intervals
-- Charts are returned as inline images in the response
 
 ## 6. REPORTING MODE
 When a user needs help communicating their research:
@@ -93,7 +93,7 @@ You can chain these capabilities seamlessly:
 2. "Analyze that data"
    → Automatically use the gcs_path from step 1, infer data_description from context
 3. "Show me a visualization comparing the groups"
-   → Generate matplotlib bar chart or box plot using code execution
+   → Delegate to visualization_agent which generates matplotlib charts
 4. "Generate hypotheses based on these findings"
    → Use the analysis results to inform hypothesis generation
 5. "Prepare a grant proposal for this research"
@@ -109,7 +109,52 @@ You can chain these capabilities seamlessly:
 - Proactively offer next steps (e.g., "Would you like to visualize these results?")
 """
 
-# Create the agent
+# Visualization sub-agent instruction
+VIZ_AGENT_INSTRUCTION = """
+You are a data visualization specialist. Your job is to create matplotlib visualizations
+from scientific data stored in Google Cloud Storage.
+
+When given a visualization request:
+1. Parse the GCS path to load the data using google.cloud.storage
+2. Understand the data structure (groups, features, sample sizes)
+3. Create appropriate matplotlib visualizations based on the request
+4. Use clear labels, titles, legends, and appropriate color schemes
+5. Return the chart as an inline image
+
+Example code pattern:
+```python
+import json
+from google.cloud import storage
+import matplotlib.pyplot as plt
+import numpy as np
+
+# Load data from GCS
+client = storage.Client()
+bucket_name = "bucket-name"
+blob_name = "datasets/filename.json"
+bucket = client.bucket(bucket_name)
+blob = bucket.blob(blob_name)
+data = json.loads(blob.download_as_string())
+
+# Extract and plot
+# ... create visualization ...
+plt.tight_layout()
+plt.show()
+```
+
+Always ensure visualizations are publication-quality with proper formatting.
+"""
+
+# Create visualization sub-agent (uses code execution for matplotlib)
+visualization_agent = LlmAgent(
+    name="visualization_agent",
+    model="gemini-2.0-flash",
+    description="Creates data visualizations using matplotlib. Delegate here when the user asks for charts, plots, graphs, or visual representations of data.",
+    instruction=VIZ_AGENT_INSTRUCTION,
+    code_executor=BuiltInCodeExecutor(),
+)
+
+# Create the root agent (coordinator)
 agent = Agent(
     model="gemini-2.0-flash",  # Or "gemini-2.5-pro" for more complex reasoning
     name="scientific_research_assistant",
@@ -120,8 +165,8 @@ agent = Agent(
         tools.generate_hypotheses,
         tools.analyze_experimental_data,
         tools.prepare_research_report,
-        code_interpreter,  # Enables matplotlib visualization
-    ]
+    ],
+    sub_agents=[visualization_agent],  # Delegate visualization requests here
 )
 
 # Wrap in AdkApp for deployment
