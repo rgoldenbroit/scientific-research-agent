@@ -3,10 +3,7 @@ Scientific Research Agent - Main Definition
 Combines ideation, analysis, and reporting capabilities.
 """
 
-import google.auth
 from google.adk.agents import Agent
-from google.adk.tools.bigquery import BigQueryToolset, BigQueryCredentialsConfig
-from google.adk.tools.bigquery.config import BigQueryToolConfig
 from vertexai.agent_engines import AdkApp
 from . import tools
 
@@ -38,20 +35,17 @@ When a user wants to see available datasets:
 - Use get_table_info to get details about a specific table
 - Also use list_datasets for GCS-stored data if needed
 
-## 3. ANALYSIS & VISUALIZATION MODE (BigQuery Powered)
-When a user wants to analyze data OR create visualizations:
-- Use the ask_data_insights tool for natural language queries about the data
-- This powerful tool can:
-  - Answer questions about the data in plain English
-  - Calculate statistics, comparisons, and trends
-  - Generate visualizations (charts returned as Vega-Lite specs)
-  - Perform complex analytical queries without writing SQL
-- Example queries to ask_data_insights:
-  - "What is the average expression of each gene by group?"
-  - "Show me a bar chart comparing BRCA1 expression between Wild_Type and Mutant"
-  - "Are there significant differences between the groups?"
-  - "Create a box plot of all gene expressions grouped by group_name"
-- You can also use execute_sql for custom SQL queries if needed
+## 3. ANALYSIS MODE (BigQuery Powered)
+When a user wants to analyze data:
+- Use execute_sql to run SQL queries against BigQuery tables
+- Use analyze_experimental_data for data stored in GCS
+- Use list_table_ids to see available BigQuery tables
+- Use get_table_info to get schema and row count for a table
+- Example SQL queries:
+  - "SELECT group_name, AVG(BRCA1) as avg_brca1 FROM \`project.dataset.table\` GROUP BY group_name"
+  - "SELECT * FROM \`project.dataset.table\` WHERE group_name = 'Wild_Type' LIMIT 10"
+  - "SELECT group_name, COUNT(*) as n, AVG(TP53) as mean_tp53, STDDEV(TP53) as std_tp53 FROM \`project.dataset.table\` GROUP BY group_name"
+- Write SQL to calculate statistics, comparisons, and aggregations
 
 ## 4. IDEATION MODE
 When a user wants to brainstorm or generate new research ideas:
@@ -79,9 +73,9 @@ You can chain these capabilities seamlessly:
 1. "Generate genomics data for Wild_Type and Mutant groups"
    → Creates data, saves to BigQuery table, remember the table name
 2. "Analyze that data"
-   → Use ask_data_insights with the BigQuery table to get statistics
-3. "Show me a visualization comparing the groups"
-   → Use ask_data_insights to generate a chart (e.g., "bar chart of mean expression by group")
+   → Use execute_sql to query the BigQuery table for statistics
+3. "Compare the groups statistically"
+   → Use SQL with GROUP BY, AVG, STDDEV to compare groups
 4. "Generate hypotheses based on these findings"
    → Use analysis insights to inform hypothesis generation
 5. "Prepare a grant proposal for this research"
@@ -94,23 +88,15 @@ You can chain these capabilities seamlessly:
 
 ## General Guidelines
 - Always ask for clarification when the research context is unclear
-- Use ask_data_insights for both analysis AND visualization
+- Use execute_sql for BigQuery analysis, analyze_experimental_data for GCS data
 - Cite relevant methodological considerations
 - Be honest about limitations in your analysis
 - Encourage rigorous, reproducible science
 - Adapt your language to the user's expertise level
-- Proactively offer next steps (e.g., "Would you like to visualize these results?")
+- Proactively offer next steps (e.g., "Would you like to analyze this data?")
 """
 
-# Configure BigQuery toolset with Application Default Credentials
-credentials, project = google.auth.default()
-credentials_config = BigQueryCredentialsConfig(credentials=credentials)
-bigquery_toolset = BigQueryToolset(
-    credentials_config=credentials_config,
-    bigquery_tool_config=BigQueryToolConfig()
-)
-
-# Create the agent with BigQuery integration
+# Create the agent with custom BigQuery tools
 agent = Agent(
     model="gemini-2.0-flash",  # Or "gemini-2.5-pro" for more complex reasoning
     name="scientific_research_assistant",
@@ -120,7 +106,10 @@ agent = Agent(
         tools.list_datasets,
         tools.generate_hypotheses,
         tools.prepare_research_report,
-        bigquery_toolset,  # Includes ask_data_insights, execute_sql, list_tables, etc.
+        tools.analyze_experimental_data,
+        tools.list_table_ids,
+        tools.get_table_info,
+        tools.execute_sql,
     ],
 )
 

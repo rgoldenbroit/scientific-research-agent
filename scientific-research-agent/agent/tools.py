@@ -406,27 +406,118 @@ def prepare_research_report(
 ) -> dict:
     """
     Help prepare research documentation including reports, visualizations, or grant proposals.
-    
+
     Args:
         report_type: Type of document - 'summary', 'full_report', 'grant_proposal', or 'presentation'
         target_audience: Who will read this - 'scientific_peers', 'funding_agency', 'general_public'
         sections_needed: Specific sections to include (optional)
-    
+
     Returns:
         dict containing report template and guidance
     """
     templates = {
-        "grant_proposal": ["Abstract", "Specific Aims", "Background", "Methodology", 
+        "grant_proposal": ["Abstract", "Specific Aims", "Background", "Methodology",
                           "Preliminary Data", "Timeline", "Budget Justification"],
-        "full_report": ["Abstract", "Introduction", "Methods", "Results", 
+        "full_report": ["Abstract", "Introduction", "Methods", "Results",
                         "Discussion", "Conclusions", "References"],
         "summary": ["Key Findings", "Implications", "Next Steps"],
         "presentation": ["Title", "Background", "Methods", "Results", "Conclusions"]
     }
-    
+
     return {
         "status": "ready_for_reporting",
         "report_type": report_type,
         "audience": target_audience,
         "suggested_sections": sections_needed or templates.get(report_type, templates["summary"])
     }
+
+
+def list_table_ids() -> dict:
+    """
+    List all BigQuery tables in the research_agent_data dataset.
+
+    Returns:
+        dict containing list of table IDs
+    """
+    if not BQ_PROJECT:
+        return {"status": "error", "message": "No BigQuery project configured"}
+
+    try:
+        client = _get_bigquery_client()
+        dataset_ref = f"{BQ_PROJECT}.{BQ_DATASET}"
+        tables = list(client.list_tables(dataset_ref))
+
+        table_list = [table.table_id for table in tables]
+        return {
+            "status": "success",
+            "dataset": dataset_ref,
+            "table_count": len(table_list),
+            "tables": table_list
+        }
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
+def get_table_info(table_name: str) -> dict:
+    """
+    Get schema and row count for a BigQuery table.
+
+    Args:
+        table_name: Name of the table (without project/dataset prefix)
+
+    Returns:
+        dict containing table schema and metadata
+    """
+    if not BQ_PROJECT:
+        return {"status": "error", "message": "No BigQuery project configured"}
+
+    try:
+        client = _get_bigquery_client()
+        table_id = f"{BQ_PROJECT}.{BQ_DATASET}.{table_name}"
+        table = client.get_table(table_id)
+
+        schema_info = [{"name": field.name, "type": field.field_type} for field in table.schema]
+
+        return {
+            "status": "success",
+            "table_id": table_id,
+            "num_rows": table.num_rows,
+            "num_columns": len(schema_info),
+            "schema": schema_info,
+            "created": table.created.isoformat() if table.created else None
+        }
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
+def execute_sql(sql_query: str) -> dict:
+    """
+    Execute a SQL query against BigQuery and return results.
+
+    Args:
+        sql_query: The SQL query to execute. Use fully qualified table names
+                   (project.dataset.table) or reference tables in research_agent_data dataset.
+
+    Returns:
+        dict containing query results as a list of rows
+    """
+    if not BQ_PROJECT:
+        return {"status": "error", "message": "No BigQuery project configured"}
+
+    try:
+        client = _get_bigquery_client()
+        query_job = client.query(sql_query)
+        results = query_job.result()
+
+        rows = []
+        for row in results:
+            rows.append(dict(row))
+
+        return {
+            "status": "success",
+            "row_count": len(rows),
+            "rows": rows[:100],  # Limit to 100 rows
+            "truncated": len(rows) > 100
+        }
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
