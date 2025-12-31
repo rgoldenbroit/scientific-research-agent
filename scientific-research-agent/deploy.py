@@ -60,7 +60,6 @@ def main():
             "staging_bucket": STAGING_BUCKET,
             "env_vars": {
                 "AGENT_DATA_BUCKET": DATA_BUCKET,
-                "GOOGLE_CLOUD_PROJECT": PROJECT_ID,
                 "AGENT_BQ_DATASET": BQ_DATASET
             }
         }
