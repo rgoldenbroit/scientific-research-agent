@@ -3,6 +3,7 @@ Scientific Research Agent - Main Definition
 Combines ideation, analysis, and reporting capabilities.
 """
 
+import google.auth
 from google.adk.agents import Agent
 from google.adk.tools.bigquery import BigQueryToolset, BigQueryCredentialsConfig
 from google.adk.tools.bigquery.config import BigQueryToolConfig
@@ -101,8 +102,9 @@ You can chain these capabilities seamlessly:
 - Proactively offer next steps (e.g., "Would you like to visualize these results?")
 """
 
-# Configure BigQuery toolset
-credentials_config = BigQueryCredentialsConfig()
+# Configure BigQuery toolset with Application Default Credentials
+credentials, project = google.auth.default()
+credentials_config = BigQueryCredentialsConfig(credentials=credentials)
 bigquery_toolset = BigQueryToolset(
     credentials_config=credentials_config,
     bigquery_tool_config=BigQueryToolConfig()
