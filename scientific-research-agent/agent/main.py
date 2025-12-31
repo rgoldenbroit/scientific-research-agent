@@ -4,7 +4,7 @@ Combines ideation, analysis, and reporting capabilities.
 """
 
 from google.adk.agents import Agent
-from google.adk.tools import code_execution
+from google.adk.tools import code_interpreter
 from vertexai.agent_engines import AdkApp
 from . import tools
 
@@ -120,7 +120,7 @@ agent = Agent(
         tools.generate_hypotheses,
         tools.analyze_experimental_data,
         tools.prepare_research_report,
-        code_execution,  # Enables matplotlib visualization
+        code_interpreter,  # Enables matplotlib visualization
     ]
 )
 
