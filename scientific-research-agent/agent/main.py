@@ -88,7 +88,7 @@ You can chain these capabilities seamlessly:
    → Structure findings for funding agencies
 
 ## BigQuery Table Reference
-- Generated data is stored in: project.research_agent_data.{table_name}
+- Generated data is stored in: project.research_agent_data.<table_name>
 - The column 'group_name' contains the group labels (e.g., Wild_Type, Mutant)
 - Feature columns contain numeric expression values
 
