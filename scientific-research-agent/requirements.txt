@@ -1,5 +1,6 @@
 google-cloud-aiplatform[agent_engines,adk]>=1.112
-google-adk
+google-adk>=1.1.0
 google-cloud-storage
+google-cloud-bigquery
 cloudpickle
 pydantic

@@ -9,14 +9,97 @@ import uuid
 from datetime import datetime
 
 from google.cloud import storage
+from google.cloud import bigquery
 
 # GCS bucket for storing generated data - set via environment variable
 DATA_BUCKET = os.environ.get("AGENT_DATA_BUCKET", "")
+
+# BigQuery configuration - set via environment variables
+BQ_PROJECT = os.environ.get("GOOGLE_CLOUD_PROJECT", "")
+BQ_DATASET = os.environ.get("AGENT_BQ_DATASET", "research_agent_data")
 
 
 def _get_storage_client():
     """Get a GCS storage client."""
     return storage.Client()
+
+
+def _get_bigquery_client():
+    """Get a BigQuery client."""
+    return bigquery.Client(project=BQ_PROJECT)
+
+
+def _ensure_bq_dataset():
+    """Ensure the BigQuery dataset exists, create if not."""
+    if not BQ_PROJECT:
+        return False
+
+    client = _get_bigquery_client()
+    dataset_id = f"{BQ_PROJECT}.{BQ_DATASET}"
+
+    try:
+        client.get_dataset(dataset_id)
+    except Exception:
+        # Dataset doesn't exist, create it
+        dataset = bigquery.Dataset(dataset_id)
+        dataset.location = "US"
+        client.create_dataset(dataset, exists_ok=True)
+
+    return True
+
+
+def _upload_to_bigquery(data_rows: list, table_name: str, features: list, groups: list, data_type: str) -> str:
+    """
+    Upload data to BigQuery and return the table reference.
+
+    Args:
+        data_rows: List of data dictionaries
+        table_name: Name for the BigQuery table
+        features: List of feature column names
+        groups: List of group names
+        data_type: Type of data (for metadata)
+
+    Returns:
+        BigQuery table reference string (project.dataset.table)
+    """
+    if not BQ_PROJECT:
+        return ""
+
+    if not _ensure_bq_dataset():
+        return ""
+
+    client = _get_bigquery_client()
+    table_id = f"{BQ_PROJECT}.{BQ_DATASET}.{table_name}"
+
+    # Define schema based on the data
+    schema = [
+        bigquery.SchemaField("sample_id", "STRING"),
+        bigquery.SchemaField("group_name", "STRING"),  # renamed from 'group' which is reserved
+    ]
+    for feature in features:
+        schema.append(bigquery.SchemaField(feature, "FLOAT64"))
+
+    # Create or replace table
+    table = bigquery.Table(table_id, schema=schema)
+    table = client.create_table(table, exists_ok=True)
+
+    # Prepare rows for insertion (rename 'group' to 'group_name')
+    rows_to_insert = []
+    for row in data_rows:
+        new_row = {
+            "sample_id": row["sample_id"],
+            "group_name": row["group"]
+        }
+        for feature in features:
+            new_row[feature] = row.get(feature)
+        rows_to_insert.append(new_row)
+
+    # Insert data
+    errors = client.insert_rows_json(table_id, rows_to_insert)
+    if errors:
+        raise Exception(f"BigQuery insert errors: {errors}")
+
+    return table_id
 
 
 def _upload_to_gcs(data: dict, filename: str) -> str:
@@ -191,10 +274,33 @@ def generate_synthetic_data(
         "csv_format": "sample_id,group," + ",".join(config["features"])
     }
 
-    # Save to GCS if bucket is configured
+    # Generate unique table/file name
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    unique_id = uuid.uuid4().hex[:8]
+
+    # Save to BigQuery if project is configured
+    if BQ_PROJECT:
+        table_name = f"{data_type}_{timestamp}_{unique_id}"
+        try:
+            bq_table = _upload_to_bigquery(
+                data_rows=data_rows,
+                table_name=table_name,
+                features=config["features"],
+                groups=config["group_labels"][:num_groups],
+                data_type=data_type
+            )
+            result["bigquery_table"] = bq_table
+            result["bigquery_status"] = "saved_to_bigquery"
+        except Exception as e:
+            result["bigquery_table"] = None
+            result["bigquery_status"] = f"error: {str(e)}"
+    else:
+        result["bigquery_table"] = None
+        result["bigquery_status"] = "not_saved_no_project_configured"
+
+    # Also save to GCS if bucket is configured (for backward compatibility)
     if DATA_BUCKET:
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"{data_type}_{timestamp}_{uuid.uuid4().hex[:8]}.json"
+        filename = f"{data_type}_{timestamp}_{unique_id}.json"
         gcs_path = _upload_to_gcs(result, filename)
         result["gcs_path"] = gcs_path
         result["storage_status"] = "saved_to_gcs"
