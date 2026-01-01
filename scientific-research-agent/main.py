@@ -9,7 +9,8 @@ from vertexai.agent_engines import AdkApp
 from agents import ideation_agent
 
 # TEMPORARY: Test ideation_agent directly (bypassing coordinator)
-agent = ideation_agent
+# ADK CLI expects 'root_agent' variable name
+root_agent = ideation_agent
 
 # Wrap in AdkApp for Vertex AI Agent Engine deployment
-app = AdkApp(agent=agent)
+app = AdkApp(agent=root_agent)
