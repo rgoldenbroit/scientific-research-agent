@@ -4,10 +4,6 @@ Ideation Agent - Generates research hypotheses and experiment ideas.
 from google.adk.agents import Agent
 from google.adk.tools import google_search
 
-import sys
-import os
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 from tools.bigquery import get_bigquery_schema, list_table_ids
 
 IDEATION_INSTRUCTION = """

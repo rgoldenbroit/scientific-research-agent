@@ -3,10 +3,6 @@ Writer Agent - Drafts research documents in Google Docs.
 """
 from google.adk.agents import Agent
 
-import sys
-import os
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 from tools.docs import create_google_doc, append_to_doc, embed_image_in_doc, add_heading_to_doc
 
 WRITER_INSTRUCTION = """

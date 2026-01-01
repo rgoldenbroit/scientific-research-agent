@@ -4,10 +4,6 @@ Visualization Agent - Creates publication-quality charts and figures.
 from google.adk.agents import Agent
 from google.adk.code_executors import VertexAiCodeExecutor
 
-import sys
-import os
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 from tools.bigquery import execute_sql
 from tools.drive import save_to_drive, save_image_to_drive
 
