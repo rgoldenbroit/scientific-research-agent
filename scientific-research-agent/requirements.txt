@@ -1,6 +1,24 @@
+# Core ADK dependencies
 google-cloud-aiplatform[agent_engines,adk]>=1.112
 google-adk>=1.1.0
+
+# Google Cloud services
 google-cloud-storage
 google-cloud-bigquery
+
+# Google APIs for Drive/Docs
+google-api-python-client
+google-auth-oauthlib
+
+# Statistical analysis
+scipy
+statsmodels
+lifelines  # For survival analysis
+
+# Visualization
+matplotlib
+seaborn
+
+# Utilities
 cloudpickle
 pydantic

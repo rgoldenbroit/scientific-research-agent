@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Deploy the Scientific Research Agent to Vertex AI Agent Engine.
+Deploy the Multi-Agent Scientific Research Assistant to Vertex AI Agent Engine.
 
 *** RUN THIS FROM YOUR WORK COMPUTER ***
 
@@ -12,7 +12,7 @@ Before running:
 Usage: python3 deploy.py
 """
 import vertexai
-from agent.main import app
+from main import app
 
 # =============================================================================
 # CONFIGURATION - UPDATE THESE VALUES
@@ -28,23 +28,23 @@ BQ_DATASET = "research_agent_data"        # BigQuery dataset for storing data
 # =============================================================================
 
 def main():
-    print(f"🚀 Deploying Scientific Research Agent")
+    print(f"🚀 Deploying Multi-Agent Scientific Research Assistant")
     print(f"   Project: {PROJECT_ID}")
     print(f"   Location: {LOCATION}")
     print(f"   Staging Bucket: {STAGING_BUCKET}")
     print(f"   Data Bucket: {DATA_BUCKET}")
     print(f"   BigQuery Dataset: {BQ_DATASET}")
     print()
-    
+
     # Initialize Vertex AI client
     client = vertexai.Client(
         project=PROJECT_ID,
         location=LOCATION,
     )
-    
+
     # Deploy the agent
-    print("📦 Creating agent in Agent Engine (this may take a few minutes)...")
-    
+    print("📦 Creating multi-agent system in Agent Engine (this may take a few minutes)...")
+
     remote_agent = client.agent_engines.create(
         agent=app,
         config={
@@ -53,10 +53,17 @@ def main():
                 "google-adk>=1.1.0",
                 "google-cloud-storage",
                 "google-cloud-bigquery",
+                "google-api-python-client",
+                "google-auth-oauthlib",
+                "scipy",
+                "statsmodels",
+                "matplotlib",
+                "seaborn",
+                "lifelines",
                 "cloudpickle",
                 "pydantic"
             ],
-            "extra_packages": ["./agent"],
+            "extra_packages": ["./agents", "./tools"],
             "staging_bucket": STAGING_BUCKET,
             "env_vars": {
                 "AGENT_DATA_BUCKET": DATA_BUCKET,
