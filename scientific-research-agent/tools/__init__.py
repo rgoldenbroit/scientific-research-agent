@@ -26,6 +26,11 @@ from .docs import (
     embed_image_in_doc,
     add_heading_to_doc,
 )
+from .sheets import (
+    create_spreadsheet_with_chart,
+    add_chart_to_spreadsheet,
+    get_spreadsheet_url,
+)
 
 __all__ = [
     # BigQuery tools
@@ -47,4 +52,8 @@ __all__ = [
     "append_to_doc",
     "embed_image_in_doc",
     "add_heading_to_doc",
+    # Sheets tools
+    "create_spreadsheet_with_chart",
+    "add_chart_to_spreadsheet",
+    "get_spreadsheet_url",
 ]
