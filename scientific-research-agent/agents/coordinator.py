@@ -2,6 +2,7 @@
 Research Coordinator - Parent agent that orchestrates the multi-agent workflow.
 """
 from google.adk.agents import Agent
+from google.adk.tools import AgentTool
 
 from .ideation import ideation_agent
 from .analysis import analysis_agent
@@ -134,10 +135,10 @@ research_coordinator = Agent(
     description="Orchestrates multi-agent research workflow by delegating to specialized sub-agents for ideation, analysis, visualization, and writing.",
     model="gemini-2.0-flash",
     instruction=COORDINATOR_INSTRUCTION,
-    sub_agents=[
-        ideation_agent,
-        analysis_agent,
-        visualization_agent,
-        writer_agent,
+    tools=[
+        AgentTool(agent=ideation_agent),
+        AgentTool(agent=analysis_agent),
+        AgentTool(agent=visualization_agent),
+        AgentTool(agent=writer_agent),
     ],
 )
