@@ -2,7 +2,6 @@
 Visualization Agent - Creates publication-quality charts and figures.
 """
 from google.adk.agents import Agent
-from google.adk.code_executors import VertexAiCodeExecutor
 
 from tools.bigquery import execute_sql
 from tools.drive import save_to_drive, save_image_to_drive
@@ -158,5 +157,4 @@ visualization_agent = Agent(
         save_to_drive,
         save_image_to_drive,
     ],
-    code_executor=VertexAiCodeExecutor(),
 )

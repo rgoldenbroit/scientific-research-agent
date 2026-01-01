@@ -2,7 +2,6 @@
 Analysis Agent - Performs statistical analysis and hypothesis testing.
 """
 from google.adk.agents import Agent
-from google.adk.code_executors import VertexAiCodeExecutor
 
 from tools.bigquery import execute_sql, list_table_ids, get_table_info
 
@@ -127,5 +126,4 @@ analysis_agent = Agent(
         list_table_ids,
         get_table_info,
     ],
-    code_executor=VertexAiCodeExecutor(),
 )
