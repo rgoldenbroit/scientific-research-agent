@@ -2,9 +2,10 @@
 Ideation Agent - Generates research hypotheses and experiment ideas.
 """
 from google.adk.agents import Agent
-from google.adk.tools import google_search
 
-from tools.bigquery import get_bigquery_schema, list_table_ids
+# NOTE: Tools temporarily removed to test if AgentTool delegation works
+# from google.adk.tools import google_search
+# from tools.bigquery import get_bigquery_schema, list_table_ids
 
 IDEATION_INSTRUCTION = """
 You are the Ideation Agent for scientific research. Your role is to generate
@@ -70,9 +71,6 @@ ideation_agent = Agent(
     description="Generates research hypotheses and experiment ideas by searching scientific literature and inspecting available datasets. Call this agent when users want research direction, hypothesis generation, or to explore what questions can be answered with available data.",
     model="gemini-2.0-flash",
     instruction=IDEATION_INSTRUCTION,
-    tools=[
-        google_search,
-        get_bigquery_schema,
-        list_table_ids,
-    ],
+    # Tools temporarily removed to test AgentTool delegation
+    tools=[],
 )
