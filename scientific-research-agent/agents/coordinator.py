@@ -1,8 +1,8 @@
 """
 Research Coordinator - Parent agent that orchestrates the multi-agent workflow.
+Uses sub_agents with LLM-driven delegation (transfer_to_agent) instead of AgentTool.
 """
 from google.adk.agents import Agent
-from google.adk.tools import AgentTool
 
 from .ideation import ideation_agent
 from .analysis import analysis_agent
@@ -124,10 +124,19 @@ Users have access to:
 - **TCGA**: Public cancer genomics data (clinical, mutations, expression)
 - **Custom datasets**: Generated or uploaded data in BigQuery
 
-## Important
+## Important - How to Delegate
 You are an orchestrator. You do NOT have direct access to tools like BigQuery,
-Google Drive, or code execution. You work exclusively by delegating to your
-sub-agents who have the appropriate tools for each task.
+Google Drive, or code execution.
+
+To delegate a task, simply state that you are transferring to the appropriate agent.
+The system will automatically route the request. For example:
+- "I'm transferring you to the ideation_agent to generate hypotheses."
+- "Let me hand this off to the analysis_agent for statistical analysis."
+
+After a sub-agent completes its task, control returns to you. You can then:
+- Summarize the results for the user
+- Transfer to another agent for the next step
+- Ask the user what they'd like to do next
 """
 
 research_coordinator = Agent(
@@ -135,10 +144,12 @@ research_coordinator = Agent(
     description="Orchestrates multi-agent research workflow by delegating to specialized sub-agents for ideation, analysis, visualization, and writing.",
     model="gemini-2.0-flash",
     instruction=COORDINATOR_INSTRUCTION,
-    tools=[
-        AgentTool(agent=ideation_agent),
-        AgentTool(agent=analysis_agent),
-        AgentTool(agent=visualization_agent),
-        AgentTool(agent=writer_agent),
+    # Use sub_agents for LLM-driven delegation (transfer_to_agent)
+    # This avoids the "Tool use with function calling is unsupported" error
+    sub_agents=[
+        ideation_agent,
+        analysis_agent,
+        visualization_agent,
+        writer_agent,
     ],
 )
