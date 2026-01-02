@@ -75,7 +75,23 @@ Always structure your output:
 
 ## Data for Visualization
 [Summary statistics or data that the Visualization Agent can use]
+
+---
+**What would you like to do next?**
+- Create a visualization of these results?
+- Analyze a different hypothesis?
+- Write up a report of the findings?
+---
 ```
+
+## CRITICAL: Handoff Back to Coordinator
+When you have finished your analysis:
+1. Present the results clearly with the format above
+2. End your response by offering next steps (visualization, more analysis, or report)
+3. The coordinator will handle the user's response and route to the appropriate agent
+
+Do NOT try to create visualizations yourself - that's the visualization_agent's job.
+Do NOT try to write reports yourself - that's the writer_agent's job.
 
 ## Important Guidelines
 - Always check assumptions before parametric tests

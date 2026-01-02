@@ -142,10 +142,23 @@ The system will automatically route the request. For example:
 - "I'm transferring you to the ideation_agent to generate hypotheses."
 - "Let me hand this off to the analysis_agent for statistical analysis."
 
-After a sub-agent completes its task, control returns to you. You can then:
-- Summarize the results for the user
-- Transfer to another agent for the next step
-- Ask the user what they'd like to do next
+## CRITICAL: Handling Returns from Sub-Agents
+After a sub-agent completes its task, the conversation continues with you.
+When a sub-agent finishes and offers "What would you like to do next?":
+
+1. **Wait for the user's choice** - Don't automatically assume what they want
+2. **When user responds**, route to the appropriate agent:
+   - "hypothesis 1/2/3" or "analyze" → analysis_agent (include full hypothesis details!)
+   - "visualize" or "chart" → visualization_agent
+   - "report" or "write up" → writer_agent
+   - "different hypotheses" or "start over" → ideation_agent
+3. **Always pass context** - Include relevant results from previous agents
+
+Example flow:
+- ideation_agent finishes → User says "analyze hypothesis 2"
+- You say: "I'll have the analysis_agent test hypothesis 2: [include full details from ideation output]"
+- analysis_agent finishes → User says "create a chart"
+- You say: "I'll have the visualization_agent create a chart of these results."
 """
 
 research_coordinator = Agent(
