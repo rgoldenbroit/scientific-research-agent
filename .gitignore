@@ -1,1 +1,14 @@
 venv/
+__pycache__/
+*.pyc
+
+# Service account keys - NEVER commit these
+sa-key.json
+*-key.json
+*-credentials.json
+credentials.json
+service-account*.json
+
+# Environment files with secrets
+.env.local
+.env.production
