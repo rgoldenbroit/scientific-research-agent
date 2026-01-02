@@ -12,3 +12,8 @@ service-account*.json
 # Environment files with secrets
 .env.local
 .env.production
+
+# Generated output files
+scientific-research-agent/output/*.html
+scientific-research-agent/output/*.json
+!scientific-research-agent/output/.gitkeep

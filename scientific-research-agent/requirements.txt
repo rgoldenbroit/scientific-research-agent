@@ -18,6 +18,7 @@ lifelines  # For survival analysis
 # Visualization
 matplotlib
 seaborn
+plotly>=5.18.0  # Interactive HTML charts
 
 # Utilities
 cloudpickle

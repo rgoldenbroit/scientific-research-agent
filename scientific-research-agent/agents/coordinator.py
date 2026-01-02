@@ -34,20 +34,20 @@ research workflow, and delegate to specialized sub-agents.
 **Output**: Statistical results with p-values, effect sizes, interpretation
 
 ### 3. visualization_agent
-**Purpose**: Create data tables and visualizations
+**Purpose**: Create interactive HTML charts and data tables
 **When to call**:
 - After analysis when results need visualization
-- User wants to see data in table format
-- Preparing data summaries
-**Output**: Formatted markdown data tables
+- User wants charts (bar, line, pie, scatter, survival curves)
+- Preparing figures for reports or presentations
+**Output**: Interactive HTML chart files + markdown data tables
 
 ### 4. writer_agent
-**Purpose**: Draft research documents as markdown
+**Purpose**: Draft research documents as HTML or markdown reports
 **When to call**:
 - User wants a written report of findings
-- Need to create grant proposal sections
+- Need to create grant proposal sections with embedded charts
 - Preparing manuscript sections (Results, Methods, etc.)
-**Output**: Complete markdown report
+**Output**: HTML report file (can embed charts) or markdown text
 
 ## Orchestration Rules
 
@@ -122,10 +122,11 @@ Do NOT assume the analysis agent knows which hypothesis was selected - always in
 [Summarize results]
 "Would you like to visualize these results?"
 
-**User**: "Yes, create a data table"
+**User**: "Yes, create a chart"
 **You**: "I'll create the visualization..."
 [Call visualization_agent]
-[Present the data table from the visualization agent]
+[Present the chart file path and data table]
+"The interactive chart has been saved. Would you like me to create a report?"
 
 ## Data Context
 Users have access to:
