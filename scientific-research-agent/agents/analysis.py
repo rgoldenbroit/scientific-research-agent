@@ -3,7 +3,7 @@ Analysis Agent - Performs statistical analysis and hypothesis testing.
 """
 from google.adk.agents import Agent
 
-from tools.bigquery import execute_sql, list_table_ids, get_table_info
+from tools.bigquery import execute_sql, list_table_ids, get_table_info, get_bigquery_schema
 
 ANALYSIS_INSTRUCTION = """
 You are the Analysis Agent for scientific research. Your role is to perform
@@ -37,6 +37,16 @@ Key columns include:
 - `demo__age_at_index` - Age at diagnosis
 - `demo__vital_status` - 'Alive' or 'Dead'
 - `demo__days_to_death` - Survival time for deceased patients
+
+## Verifying Column Names
+If you encounter a column name error or are unsure about column names:
+1. Call get_bigquery_schema("isb-cgc-bq.TCGA.clinical_gdc_current") to see actual schema
+2. Use the exact column names from the schema in your queries
+3. Never guess or assume column names - always verify when uncertain
+
+Common errors to watch for:
+- "Unrecognized name" errors mean the column name is wrong
+- Use get_bigquery_schema to find the correct column name
 
 ## Example Workflow
 
@@ -125,5 +135,6 @@ analysis_agent = Agent(
         execute_sql,
         list_table_ids,
         get_table_info,
+        get_bigquery_schema,
     ],
 )

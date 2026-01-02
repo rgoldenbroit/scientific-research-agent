@@ -118,17 +118,24 @@ def get_table_info(table_name: str) -> dict:
     Get schema and row count for a BigQuery table.
 
     Args:
-        table_name: Name of the table (without project/dataset prefix)
+        table_name: Name of the table. Can be:
+            - Simple name (e.g., "my_table") - uses default project/dataset
+            - Fully-qualified (e.g., "isb-cgc-bq.TCGA.clinical_gdc_current")
 
     Returns:
         dict containing table schema and metadata
     """
-    if not BQ_PROJECT:
-        return {"status": "error", "message": "No BigQuery project configured"}
-
     try:
         client = _get_bigquery_client()
-        table_id = f"{BQ_PROJECT}.{BQ_DATASET}.{table_name}"
+
+        # If table_name contains 2+ dots, treat as fully-qualified
+        if table_name.count(".") >= 2:
+            table_id = table_name
+        else:
+            if not BQ_PROJECT:
+                return {"status": "error", "message": "No BigQuery project configured"}
+            table_id = f"{BQ_PROJECT}.{BQ_DATASET}.{table_name}"
+
         table = client.get_table(table_id)
 
         schema_info = [{"name": field.name, "type": field.field_type} for field in table.schema]

@@ -6,7 +6,7 @@ providing shareable URLs for the visualizations.
 """
 from google.adk.agents import Agent
 
-from tools.bigquery import execute_sql, get_table_info
+from tools.bigquery import execute_sql, get_table_info, get_bigquery_schema
 from tools.sheets import create_spreadsheet_with_chart
 
 VISUALIZATION_INSTRUCTION = """
@@ -177,6 +177,7 @@ visualization_agent = Agent(
     tools=[
         execute_sql,
         get_table_info,
+        get_bigquery_schema,
         create_spreadsheet_with_chart,
     ],
 )
