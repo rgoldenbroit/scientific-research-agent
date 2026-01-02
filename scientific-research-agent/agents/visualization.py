@@ -86,7 +86,10 @@ ALWAYS structure your output as follows:
 - [Description of the data shown]
 - [Number of data points/categories]
 
-**View Your Chart**: [spreadsheet_url]
+---
+**📊 VIEW YOUR CHART** (right-click → Open in New Tab):
+[spreadsheet_url]
+---
 
 **Interpretation**:
 [What the chart shows and key patterns to notice]
@@ -94,6 +97,8 @@ ALWAYS structure your output as follows:
 **Notes**:
 [Any caveats about the data or visualization]
 ```
+
+IMPORTANT: Always tell the user to open the link in a new tab to avoid leaving this session.
 
 ## Example Workflow (FOLLOW THIS PATTERN)
 

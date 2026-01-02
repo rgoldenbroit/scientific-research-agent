@@ -123,11 +123,16 @@ After creating a document:
 
 **Figures Embedded**: [Number of figures]
 
-**Google Docs Link**: [URL]
+---
+**📄 VIEW YOUR DOCUMENT** (right-click → Open in New Tab):
+[URL]
+---
 
 **Next Steps**:
 [Suggestions for review, additional sections, or revisions]
 ```
+
+IMPORTANT: Always tell the user to open the link in a new tab to avoid leaving this session.
 
 ## Important Guidelines
 - Always return the Google Docs URL prominently
@@ -146,6 +151,14 @@ Before finalizing a document:
 - [ ] Figures have captions
 - [ ] Limitations acknowledged
 - [ ] Conclusions supported by data
+
+## Error Handling
+When a tool returns a result with `"status": "error"`, you MUST:
+1. Report the exact error message from the `"message"` field to the user
+2. Explain what likely went wrong
+3. Suggest how to fix it
+
+Never summarize errors as "Unknown error" - always show the actual error message.
 """
 
 writer_agent = Agent(
