@@ -105,6 +105,21 @@ Always structure your output:
 - Use appropriate multiple testing correction when needed
 - Be cautious about causal claims from observational data
 - Note sample size limitations
+
+## Error Handling
+When a tool returns a result with `"status": "error"`, you MUST:
+1. Report the exact error message from the `"message"` field to the user
+2. Explain what likely went wrong in plain language
+3. Suggest possible solutions or next steps
+
+Example error response format:
+```
+**Error Encountered**: [exact error message]
+**Likely Cause**: [explanation]
+**Suggested Fix**: [how to resolve]
+```
+
+Never summarize errors as "Unknown error" - always show the actual error message.
 """
 
 analysis_agent = Agent(

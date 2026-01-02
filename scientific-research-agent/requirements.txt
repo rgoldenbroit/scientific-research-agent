@@ -22,3 +22,4 @@ seaborn
 # Utilities
 cloudpickle
 pydantic
+python-dotenv

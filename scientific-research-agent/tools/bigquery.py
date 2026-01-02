@@ -157,7 +157,10 @@ def execute_sql(sql_query: str) -> dict:
         dict containing query results as a list of rows
     """
     if not BQ_PROJECT:
-        return {"status": "error", "message": "No BigQuery project configured"}
+        return {
+            "status": "error",
+            "message": "BigQuery project not configured. The GOOGLE_CLOUD_PROJECT environment variable is not set. Please ensure the .env file is loaded or set the environment variable."
+        }
 
     try:
         client = _get_bigquery_client()
@@ -175,7 +178,15 @@ def execute_sql(sql_query: str) -> dict:
             "truncated": len(rows) > 100
         }
     except Exception as e:
-        return {"status": "error", "message": str(e)}
+        error_msg = str(e)
+        # Provide more context for common errors
+        if "403" in error_msg or "Access Denied" in error_msg:
+            error_msg = f"BigQuery access denied: {error_msg}. Check that the service account has BigQuery permissions."
+        elif "404" in error_msg or "Not found" in error_msg:
+            error_msg = f"Table or dataset not found: {error_msg}. Verify the table path is correct (project.dataset.table)."
+        elif "400" in error_msg:
+            error_msg = f"Invalid SQL query: {error_msg}. Check SQL syntax and column names."
+        return {"status": "error", "message": error_msg}
 
 
 def get_bigquery_schema(dataset_path: str = None) -> dict:
