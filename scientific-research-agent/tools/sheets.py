@@ -65,6 +65,27 @@ def _get_drive_service():
         return None
 
 
+def _get_authenticated_email():
+    """Get the email of the authenticated account for diagnostics.
+
+    Returns the email address of the account that will create files.
+    This helps debug credential mismatch issues.
+    """
+    credentials = _get_credentials()
+    if not credentials:
+        return None
+    try:
+        # For service accounts, the email is directly available
+        if hasattr(credentials, 'service_account_email'):
+            return credentials.service_account_email
+        # For user credentials (ADC), use OAuth2 userinfo
+        oauth2 = build('oauth2', 'v2', credentials=credentials)
+        user_info = oauth2.userinfo().get().execute()
+        return user_info.get('email', 'unknown')
+    except Exception:
+        return 'unknown'
+
+
 def create_spreadsheet_with_chart(
     title: str,
     data: dict,
@@ -317,6 +338,9 @@ def create_spreadsheet_with_chart(
         else:
             permission_warning = "Warning: Drive service not available. File may only be accessible to the service account."
 
+        # Get the account that created the file for diagnostics
+        created_by = _get_authenticated_email()
+
         result = {
             "status": "success",
             "spreadsheet_id": spreadsheet_id,
@@ -325,12 +349,24 @@ def create_spreadsheet_with_chart(
             "chart_type": api_chart_type,
             "data_rows": num_rows,
             "data_columns": num_cols,
+            "created_by_account": created_by,
+            "accessible": True,
             "message": f"Created spreadsheet with {api_chart_type} chart. View at: {spreadsheet_url}"
         }
 
         if permission_warning:
+            # File was created but sharing failed - user may not be able to access it
+            result["status"] = "partial_success"
+            result["accessible"] = False
             result["warning"] = permission_warning
-            result["message"] += f"\n\n⚠️ {permission_warning}"
+            result["message"] = (
+                f"⚠️ FILE MAY NOT BE ACCESSIBLE\n\n"
+                f"The spreadsheet was created but could not be shared publicly.\n"
+                f"Created by account: {created_by}\n\n"
+                f"If you cannot access the file, check your Google Drive for the account above.\n\n"
+                f"Technical details: {permission_warning}\n\n"
+                f"URL (may not work): {spreadsheet_url}"
+            )
 
         return result
 

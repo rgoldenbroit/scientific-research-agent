@@ -179,13 +179,21 @@ When a tool returns a result with `"status": "error"`, you MUST:
 
 Never summarize errors as "Unknown error" - always show the actual error message.
 
+## Partial Success Handling (IMPORTANT)
+When create_spreadsheet_with_chart returns `"status": "partial_success"`:
+1. The spreadsheet was created but the user may NOT be able to access it
+2. Check the `"accessible"` field - if `false`, warn the user prominently
+3. Show the `"created_by_account"` field so the user knows which account created it
+4. Tell the user: "The chart was created but you may not be able to view it because it's owned by a different account"
+5. Suggest: "Check Google Drive for the account shown above, or re-authenticate with: gcloud auth application-default login --scopes=https://www.googleapis.com/auth/cloud-platform,https://www.googleapis.com/auth/spreadsheets,https://www.googleapis.com/auth/drive.file"
+
 ## Warning Handling
 When a tool returns a result with a `"warning"` field:
 1. Report the warning to the user prominently
 2. If the warning mentions "File may only be accessible to the service account":
    - Tell the user the file was created but may not be accessible
    - Explain this is an authentication issue with Google APIs
-   - Suggest: "To fix this, configure GOOGLE_APPLICATION_CREDENTIALS with a service account key that has Drive sharing permissions"
+   - Show the `created_by_account` if available
 """
 
 visualization_agent = Agent(
