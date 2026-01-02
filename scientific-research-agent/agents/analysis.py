@@ -143,7 +143,7 @@ Never summarize errors as "Unknown error" - always show the actual error message
 analysis_agent = Agent(
     name="analysis_agent",
     description="Performs statistical analysis and hypothesis testing on research data. Uses SQL for data retrieval and Python (scipy, statsmodels) for statistical tests. Call this agent when users want to analyze data, test hypotheses, or run statistical comparisons.",
-    model="gemini-2.0-flash",
+    model="gemini-3-flash-preview",
     instruction=ANALYSIS_INSTRUCTION,
     tools=[
         execute_sql,

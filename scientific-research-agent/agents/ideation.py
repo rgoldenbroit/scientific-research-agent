@@ -131,7 +131,7 @@ Never summarize errors as "Unknown error" - always show the actual error message
 ideation_agent = Agent(
     name="ideation_agent",
     description="Generates research hypotheses and experiment ideas by inspecting and validating available datasets. Call this agent when users want research direction, hypothesis generation, or to explore what questions can be answered with available data.",
-    model="gemini-2.0-flash",
+    model="gemini-3-flash-preview",
     instruction=IDEATION_INSTRUCTION,
     tools=[
         get_bigquery_schema,
