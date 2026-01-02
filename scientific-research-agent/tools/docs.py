@@ -135,18 +135,31 @@ def create_google_doc(
             ).execute()
 
         # Make document accessible via link
-        if drive_service:
-            drive_service.permissions().create(
-                fileId=doc_id,
-                body={"type": "anyone", "role": "reader"}
-            ).execute()
+        doc_url = f"https://docs.google.com/document/d/{doc_id}/edit"
+        permission_warning = None
 
-        return {
+        if drive_service:
+            try:
+                drive_service.permissions().create(
+                    fileId=doc_id,
+                    body={"type": "anyone", "role": "reader"}
+                ).execute()
+            except Exception as perm_error:
+                permission_warning = f"Warning: Could not make document public ({str(perm_error)}). File may only be accessible to the service account."
+        else:
+            permission_warning = "Warning: Drive service not available. File may only be accessible to the service account."
+
+        result = {
             "status": "success",
             "doc_id": doc_id,
-            "doc_url": f"https://docs.google.com/document/d/{doc_id}/edit",
+            "doc_url": doc_url,
             "title": title
         }
+
+        if permission_warning:
+            result["warning"] = permission_warning
+
+        return result
 
     except Exception as e:
         return {

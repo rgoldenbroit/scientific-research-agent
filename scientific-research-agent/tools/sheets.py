@@ -290,18 +290,21 @@ def create_spreadsheet_with_chart(
         ).execute()
 
         # Make the spreadsheet accessible via link
+        spreadsheet_url = f"https://docs.google.com/spreadsheets/d/{spreadsheet_id}/edit"
+        permission_warning = None
+
         if drive_service:
             try:
                 drive_service.permissions().create(
                     fileId=spreadsheet_id,
                     body={"type": "anyone", "role": "reader"}
                 ).execute()
-            except Exception:
-                pass  # Continue even if permission setting fails
+            except Exception as perm_error:
+                permission_warning = f"Warning: Could not make spreadsheet public ({str(perm_error)}). File may only be accessible to the service account."
+        else:
+            permission_warning = "Warning: Drive service not available. File may only be accessible to the service account."
 
-        spreadsheet_url = f"https://docs.google.com/spreadsheets/d/{spreadsheet_id}/edit"
-
-        return {
+        result = {
             "status": "success",
             "spreadsheet_id": spreadsheet_id,
             "spreadsheet_url": spreadsheet_url,
@@ -311,6 +314,12 @@ def create_spreadsheet_with_chart(
             "data_columns": num_cols,
             "message": f"Created spreadsheet with {api_chart_type} chart. View at: {spreadsheet_url}"
         }
+
+        if permission_warning:
+            result["warning"] = permission_warning
+            result["message"] += f"\n\n⚠️ {permission_warning}"
+
+        return result
 
     except Exception as e:
         return {

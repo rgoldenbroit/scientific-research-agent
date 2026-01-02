@@ -173,6 +173,14 @@ When a tool returns a result with `"status": "error"`, you MUST:
 3. Suggest how to fix it
 
 Never summarize errors as "Unknown error" - always show the actual error message.
+
+## Warning Handling
+When a tool returns a result with a `"warning"` field:
+1. Report the warning to the user prominently
+2. If the warning mentions "File may only be accessible to the service account":
+   - Tell the user the document was created but may not be accessible
+   - Explain this is an authentication issue with Google APIs
+   - Suggest: "To fix this, configure GOOGLE_APPLICATION_CREDENTIALS with a service account key that has Drive sharing permissions"
 """
 
 writer_agent = Agent(
