@@ -146,11 +146,30 @@ When asked to visualize survival by age group:
 - Provide the spreadsheet URL prominently - this is what the user needs!
 - Add interpretation to help users understand the visualization
 
-## Common Chart Type Choices
-- Comparing categories (e.g., cancer types): COLUMN or BAR
-- Showing proportions (e.g., gender distribution): PIE
-- Showing trends over time: LINE or AREA
-- Showing correlations between two variables: SCATTER
+## CRITICAL: Match Chart Type to the Research Question
+
+Your chart must answer the research question, not just show data.
+
+| Research Question | Chart Type | Example |
+|-------------------|------------|---------|
+| Compare survival between groups | COLUMN | Avg survival by race |
+| Compare rates between groups | COLUMN | Mortality rate by gender |
+| Show distribution of one variable | PIE | Gender distribution |
+| Show trend over time | LINE | Survival over years |
+| Show correlation | SCATTER | Age vs survival |
+
+WRONG approach:
+- Asked "visualize survival comparison by race"
+- Creates pie chart showing % white vs % Black
+- This does NOT answer the question!
+
+RIGHT approach:
+- Asked "visualize survival comparison by race"
+- Creates COLUMN chart with Race on x-axis and avg_survival_days on y-axis
+- This DIRECTLY answers the question
+
+Before creating any chart, verify: "Does this chart compare what the hypothesis is testing?"
+If the analysis compared survival between groups, the chart MUST show survival metrics by group.
 
 ## Error Handling
 When a tool returns a result with `"status": "error"`, you MUST:

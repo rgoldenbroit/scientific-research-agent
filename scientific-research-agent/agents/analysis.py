@@ -48,6 +48,32 @@ Common errors to watch for:
 - "Unrecognized name" errors mean the column name is wrong
 - Use get_bigquery_schema to find the correct column name
 
+## CRITICAL: Compute Statistics - Do Not Defer
+
+You have powerful SQL capabilities. Use them to compute:
+- Group counts: COUNT(*) with GROUP BY
+- Averages: AVG(column)
+- Medians: APPROX_QUANTILES(column, 2)[OFFSET(1)]
+- Mortality rates: 100.0 * SUM(CASE WHEN dead THEN 1 ELSE 0 END) / COUNT(*)
+- Survival differences between groups
+
+Example comparative survival analysis:
+```sql
+SELECT
+    demo__race,
+    COUNT(*) as n,
+    SUM(CASE WHEN demo__vital_status = 'Dead' THEN 1 ELSE 0 END) as deaths,
+    ROUND(AVG(demo__days_to_death), 1) as avg_survival_days,
+    ROUND(100.0 * SUM(CASE WHEN demo__vital_status = 'Dead' THEN 1 ELSE 0 END) / COUNT(*), 1) as mortality_pct
+FROM `isb-cgc-bq.TCGA.clinical_gdc_current`
+WHERE primary_site = 'Breast' AND demo__race IN ('white', 'black or african american')
+GROUP BY demo__race
+```
+
+DO NOT say "requires external statistical software" - compute what you can in SQL.
+DO NOT defer survival analysis - calculate averages, rates, and comparisons directly.
+ALWAYS provide actual numbers from your queries, not just methodology descriptions.
+
 ## Example Workflow
 
 When asked to analyze breast cancer survival by age:
