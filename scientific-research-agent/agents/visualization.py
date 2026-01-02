@@ -82,9 +82,11 @@ ALWAYS structure your output as follows:
 **Chart Type**: [COLUMN/BAR/LINE/PIE/SCATTER/AREA]
 **Title**: [Chart title]
 
-**Data Summary**:
-- [Description of the data shown]
-- [Number of data points/categories]
+**Data Table** (always include this):
+| Category | Value 1 | Value 2 |
+|----------|---------|---------|
+| A        | 123     | 456     |
+| B        | 789     | 012     |
 
 ---
 **📊 VIEW YOUR CHART** (right-click → Open in New Tab):
@@ -94,9 +96,6 @@ ALWAYS structure your output as follows:
 **Interpretation**:
 [What the chart shows and key patterns to notice]
 
-**Notes**:
-[Any caveats about the data or visualization]
-
 ---
 **What would you like to do next?**
 - Create another visualization?
@@ -104,6 +103,13 @@ ALWAYS structure your output as follows:
 - Write up a report including this chart?
 ---
 ```
+
+## ALWAYS INCLUDE DATA TABLE
+Because Google Sheets sharing may fail silently due to org policies:
+1. ALWAYS include a markdown table with the actual data in your response
+2. The Sheets URL is a BONUS - if it works, great; if not, the user still has the data
+3. The data table ensures the user always gets value from the visualization request
+4. Format numbers nicely (no excessive decimals)
 
 IMPORTANT: Always tell the user to open the link in a new tab to avoid leaving this session.
 
