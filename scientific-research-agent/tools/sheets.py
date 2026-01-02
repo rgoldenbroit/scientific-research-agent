@@ -119,9 +119,22 @@ def create_spreadsheet_with_chart(
     drive_service = _get_drive_service()
 
     if not sheets_service:
+        # Provide specific diagnostic info
+        auth_method = "Unknown"
+        sa_path = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
+        if sa_path:
+            auth_method = f"Service account file: {sa_path}"
+        else:
+            auth_method = "Application Default Credentials (ADC)"
+
         return {
             "status": "error",
-            "message": f"Could not authenticate with Google Sheets API. {_last_auth_error or 'Check GOOGLE_APPLICATION_CREDENTIALS or run gcloud auth application-default login.'}"
+            "message": f"Could not authenticate with Google Sheets API. Auth method: {auth_method}. Error: {_last_auth_error or 'Unknown'}",
+            "fix_instructions": [
+                "1. Ensure Google Sheets API is enabled: gcloud services enable sheets.googleapis.com",
+                "2. If using Cloud Shell, re-authenticate with scopes: gcloud auth application-default login --scopes=https://www.googleapis.com/auth/spreadsheets,https://www.googleapis.com/auth/drive.file,https://www.googleapis.com/auth/bigquery",
+                "3. If using service account, ensure it has 'Editor' role on the project"
+            ]
         }
 
     try:
@@ -353,9 +366,11 @@ def add_chart_to_spreadsheet(
     sheets_service = _get_sheets_service()
 
     if not sheets_service:
+        auth_method = "Service account" if os.environ.get("GOOGLE_APPLICATION_CREDENTIALS") else "ADC"
         return {
             "status": "error",
-            "message": f"Could not authenticate with Google Sheets API. {_last_auth_error or 'Check GOOGLE_APPLICATION_CREDENTIALS or run gcloud auth application-default login.'}"
+            "message": f"Could not authenticate with Google Sheets API ({auth_method}). {_last_auth_error or ''}",
+            "fix_instructions": "Run: gcloud auth application-default login --scopes=https://www.googleapis.com/auth/spreadsheets,https://www.googleapis.com/auth/drive.file"
         }
 
     try:
