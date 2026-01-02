@@ -221,7 +221,8 @@ def get_bigquery_schema(dataset_path: str = None) -> dict:
         }
 
     try:
-        client = bigquery.Client()
+        # Use configured project for authentication, even when querying public datasets
+        client = _get_bigquery_client()
 
         # Check if it's a table path (has 3 parts) or dataset path (has 2 parts)
         parts = dataset_path.split(".")

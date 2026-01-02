@@ -5,7 +5,9 @@ Creates spreadsheets with embedded charts using the Sheets API.
 from typing import Optional
 
 from google.auth import default
+from google.oauth2 import service_account
 from googleapiclient.discovery import build
+import os
 
 # Scopes required for Sheets access
 SCOPES = [
@@ -13,11 +15,40 @@ SCOPES = [
     "https://www.googleapis.com/auth/drive.file",
 ]
 
+# Store last auth error for debugging
+_last_auth_error = None
+
+
+def _get_credentials():
+    """Get Google credentials, handling various authentication scenarios."""
+    global _last_auth_error
+    try:
+        # First try default credentials (works with service accounts and ADC)
+        credentials, project = default(scopes=SCOPES)
+        _last_auth_error = None
+        return credentials
+    except Exception as e:
+        _last_auth_error = str(e)
+        # Check for service account key file
+        sa_key_path = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
+        if sa_key_path and os.path.exists(sa_key_path):
+            try:
+                credentials = service_account.Credentials.from_service_account_file(
+                    sa_key_path, scopes=SCOPES
+                )
+                _last_auth_error = None
+                return credentials
+            except Exception as e2:
+                _last_auth_error = f"Default auth failed: {_last_auth_error}. SA key failed: {str(e2)}"
+        return None
+
 
 def _get_sheets_service():
     """Get an authenticated Google Sheets service."""
+    credentials = _get_credentials()
+    if not credentials:
+        return None
     try:
-        credentials, project = default(scopes=SCOPES)
         return build("sheets", "v4", credentials=credentials)
     except Exception as e:
         return None
@@ -25,8 +56,10 @@ def _get_sheets_service():
 
 def _get_drive_service():
     """Get an authenticated Google Drive service for permissions."""
+    credentials = _get_credentials()
+    if not credentials:
+        return None
     try:
-        credentials, project = default(scopes=SCOPES)
         return build("drive", "v3", credentials=credentials)
     except Exception as e:
         return None
@@ -88,7 +121,7 @@ def create_spreadsheet_with_chart(
     if not sheets_service:
         return {
             "status": "error",
-            "message": "Could not authenticate with Google Sheets API."
+            "message": f"Could not authenticate with Google Sheets API. {_last_auth_error or 'Check GOOGLE_APPLICATION_CREDENTIALS or run gcloud auth application-default login.'}"
         }
 
     try:
@@ -313,7 +346,7 @@ def add_chart_to_spreadsheet(
     if not sheets_service:
         return {
             "status": "error",
-            "message": "Could not authenticate with Google Sheets API."
+            "message": f"Could not authenticate with Google Sheets API. {_last_auth_error or 'Check GOOGLE_APPLICATION_CREDENTIALS or run gcloud auth application-default login.'}"
         }
 
     try:

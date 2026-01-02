@@ -6,6 +6,7 @@ import base64
 import os
 from typing import Optional
 
+from google.auth import default
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaInMemoryUpload
@@ -16,6 +17,31 @@ DRIVE_FOLDER_ID = os.environ.get("AGENT_DRIVE_FOLDER_ID", "")
 # Scopes required for Drive access
 SCOPES = ["https://www.googleapis.com/auth/drive.file"]
 
+# Store last auth error for debugging
+_last_auth_error = None
+
+
+def _get_credentials():
+    """Get Google credentials, handling various authentication scenarios."""
+    global _last_auth_error
+    try:
+        credentials, project = default(scopes=SCOPES)
+        _last_auth_error = None
+        return credentials
+    except Exception as e:
+        _last_auth_error = str(e)
+        sa_key_path = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
+        if sa_key_path and os.path.exists(sa_key_path):
+            try:
+                credentials = service_account.Credentials.from_service_account_file(
+                    sa_key_path, scopes=SCOPES
+                )
+                _last_auth_error = None
+                return credentials
+            except Exception as e2:
+                _last_auth_error = f"Default auth failed: {_last_auth_error}. SA key failed: {str(e2)}"
+        return None
+
 
 def _get_drive_service():
     """
@@ -24,10 +50,10 @@ def _get_drive_service():
     - Service accounts in GCP
     - User credentials via gcloud auth application-default login
     """
+    credentials = _get_credentials()
+    if not credentials:
+        return None
     try:
-        # Try to use default credentials (works in GCP and with ADC)
-        from google.auth import default
-        credentials, project = default(scopes=SCOPES)
         return build("drive", "v3", credentials=credentials)
     except Exception as e:
         return None

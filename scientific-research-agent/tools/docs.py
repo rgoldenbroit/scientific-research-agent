@@ -5,6 +5,7 @@ Uses service account authentication for simplified setup.
 import os
 from typing import Optional, List
 
+from google.auth import default
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 
@@ -17,12 +18,38 @@ SCOPES = [
     "https://www.googleapis.com/auth/drive.file"
 ]
 
+# Store last auth error for debugging
+_last_auth_error = None
+
+
+def _get_credentials():
+    """Get Google credentials, handling various authentication scenarios."""
+    global _last_auth_error
+    try:
+        credentials, project = default(scopes=SCOPES)
+        _last_auth_error = None
+        return credentials
+    except Exception as e:
+        _last_auth_error = str(e)
+        sa_key_path = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
+        if sa_key_path and os.path.exists(sa_key_path):
+            try:
+                credentials = service_account.Credentials.from_service_account_file(
+                    sa_key_path, scopes=SCOPES
+                )
+                _last_auth_error = None
+                return credentials
+            except Exception as e2:
+                _last_auth_error = f"Default auth failed: {_last_auth_error}. SA key failed: {str(e2)}"
+        return None
+
 
 def _get_docs_service():
     """Get an authenticated Google Docs service."""
+    credentials = _get_credentials()
+    if not credentials:
+        return None
     try:
-        from google.auth import default
-        credentials, project = default(scopes=SCOPES)
         return build("docs", "v1", credentials=credentials)
     except Exception:
         return None
@@ -30,9 +57,10 @@ def _get_docs_service():
 
 def _get_drive_service():
     """Get an authenticated Google Drive service."""
+    credentials = _get_credentials()
+    if not credentials:
+        return None
     try:
-        from google.auth import default
-        credentials, project = default(scopes=SCOPES)
         return build("drive", "v3", credentials=credentials)
     except Exception:
         return None
