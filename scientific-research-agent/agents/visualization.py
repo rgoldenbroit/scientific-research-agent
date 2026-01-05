@@ -74,11 +74,16 @@ When presenting chart results:
 1. ALWAYS check for the `drive_link` field in the tool response
 2. If present, show it as: **View Chart**: [drive_link]
 3. This link is clickable and opens directly in the user's browser
-4. Only fall back to file_path if drive_link is missing or drive_status shows an error
+4. If drive_link is missing, check for `drive_error` field and REPORT THE EXACT ERROR
+   so the user can troubleshoot (e.g., "Drive upload failed: <error message>")
 
 Example response when drive_link is available:
 "**View Chart**: https://drive.google.com/file/d/abc123/view
 (Click to open the interactive chart in your browser)"
+
+Example response when drive upload failed:
+"**Chart created locally**: /path/to/file.html
+Note: Drive upload failed with error: [drive_error value]. Please check Drive API permissions."
 
 ## Chart Type Selection Guide
 - **Comparing groups** (e.g., survival by mutation status) → bar or grouped_bar

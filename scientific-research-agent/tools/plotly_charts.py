@@ -203,6 +203,9 @@ def create_plotly_chart(
         if drive_result.get("drive_link"):
             result["drive_link"] = drive_result["drive_link"]
             result["message"] = f"Chart created and uploaded. View at: {drive_result['drive_link']}"
+        else:
+            # Include error details for troubleshooting
+            result["drive_error"] = drive_result.get("drive_status", "unknown error")
         result["drive_status"] = drive_result.get("drive_status", "unknown")
 
         return result
@@ -304,6 +307,8 @@ def create_kaplan_meier_chart(
         if drive_result.get("drive_link"):
             result["drive_link"] = drive_result["drive_link"]
             result["message"] = f"Survival chart created and uploaded. View at: {drive_result['drive_link']}"
+        else:
+            result["drive_error"] = drive_result.get("drive_status", "unknown error")
         result["drive_status"] = drive_result.get("drive_status", "unknown")
 
         return result
@@ -484,6 +489,8 @@ def create_html_report(
         if drive_result.get("drive_link"):
             result["drive_link"] = drive_result["drive_link"]
             result["message"] = f"Report created and uploaded. View at: {drive_result['drive_link']}"
+        else:
+            result["drive_error"] = drive_result.get("drive_status", "unknown error")
         result["drive_status"] = drive_result.get("drive_status", "unknown")
 
         return result
