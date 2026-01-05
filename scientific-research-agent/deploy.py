@@ -61,7 +61,9 @@ def main():
                 "seaborn",
                 "lifelines",
                 "cloudpickle",
-                "pydantic"
+                "pydantic",
+                "plotly>=5.18.0",
+                "python-dotenv"
             ],
             "extra_packages": ["./agents", "./tools"],
             "staging_bucket": STAGING_BUCKET,
