@@ -65,6 +65,19 @@ python3 deploy.py
 - Data bucket: `{PROJECT_ID}-agent-data`
 - BigQuery dataset: `research_agent_data`
 
+### Google Drive Integration (Shareable Links)
+
+Charts and reports are automatically uploaded to Google Drive and return shareable links that users can click directly in the chat.
+
+**Setup**:
+1. Enable Drive API in your GCP project
+2. Grant the service account `drive.file` scope access
+3. (Optional) Set `AGENT_DRIVE_FOLDER_ID` env var to store files in a specific folder
+
+**Environment Variables**:
+- `ENABLE_DRIVE_UPLOAD`: Set to `"false"` to disable (default: `"true"`)
+- `AGENT_DRIVE_FOLDER_ID`: Optional folder ID to organize uploaded files
+
 ### Critical: Keep Dependencies in Sync
 
 The `deploy.py` requirements list MUST match `requirements.txt`. Missing dependencies cause the Reasoning Engine to fail on startup with import errors.
@@ -81,6 +94,8 @@ Key dependencies that must be in both files:
 | Import errors on deployment | Package not in deployment config | Add to deploy.py requirements list |
 | Model 404 NOT_FOUND | Preview model not enabled | Enable model access in Vertex AI Model Garden |
 | BigQuery 403 error | Missing permissions | Grant BigQuery Data Viewer role |
+| Drive upload fails | Drive API not enabled or missing permissions | Enable Drive API, grant `drive.file` scope |
+| No shareable link returned | `ENABLE_DRIVE_UPLOAD=false` or auth error | Check env var and service account permissions |
 
 ## Testing
 

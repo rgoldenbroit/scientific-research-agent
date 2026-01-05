@@ -64,13 +64,14 @@ Use list_output_files to see available charts to embed.
 ## Output Format for HTML Reports
 
 After creating an HTML report:
-1. Provide the file path
+1. Provide the shareable Drive link (from the `drive_link` field in the tool response)
 2. Summarize what's included
-3. Note that user can open in browser or print to PDF
+3. Note that user can print to PDF from their browser
 
 Example output:
 
-**HTML Report Created**: /path/to/output/report_findings_20240115.html
+**Report Ready**: [drive_link from tool response]
+(Click the link above to view the report in your browser)
 
 The report includes:
 - Executive Summary
@@ -78,8 +79,20 @@ The report includes:
 - Results with embedded charts
 - Discussion and conclusions
 
-**To view**: Open the HTML file in a web browser.
-**To export as PDF**: Open in browser, then use Print -> Save as PDF.
+**To export as PDF**: Open the link, then use Print -> Save as PDF.
+
+## CRITICAL: Shareable Links
+The report tool automatically uploads to Google Drive and returns a `drive_link` field.
+
+When presenting report results:
+1. ALWAYS check for the `drive_link` field in the tool response
+2. If present, show it as: **View Report**: [drive_link]
+3. This link is clickable and opens directly in the user's browser
+4. Only fall back to file_path if drive_link is missing or drive_status shows an error
+
+Example response when drive_link is available:
+"**View Report**: https://drive.google.com/file/d/abc123/view
+(Click to open the report in your browser)"
 
 ---
 **What would you like to do next?**

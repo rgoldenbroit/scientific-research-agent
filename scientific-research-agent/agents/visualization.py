@@ -49,8 +49,8 @@ ALWAYS structure your output as follows:
 
 ## Visualization: [Title]
 
-**Interactive Chart Created**: [file_path]
-To view: Open the HTML file in a web browser, or use Cloud Shell's web preview.
+**Interactive Chart**: [drive_link from tool response]
+(Click the link above to view the interactive chart in your browser)
 
 **Data Table** (for reference):
 | Category | Value 1 | Value 2 |
@@ -66,6 +66,19 @@ To view: Open the HTML file in a web browser, or use Cloud Shell's web preview.
 - Generate a full HTML report with this chart?
 - Analyze a different hypothesis?
 ---
+
+## CRITICAL: Shareable Links
+The chart tools automatically upload to Google Drive and return a `drive_link` field.
+
+When presenting chart results:
+1. ALWAYS check for the `drive_link` field in the tool response
+2. If present, show it as: **View Chart**: [drive_link]
+3. This link is clickable and opens directly in the user's browser
+4. Only fall back to file_path if drive_link is missing or drive_status shows an error
+
+Example response when drive_link is available:
+"**View Chart**: https://drive.google.com/file/d/abc123/view
+(Click to open the interactive chart in your browser)"
 
 ## Chart Type Selection Guide
 - **Comparing groups** (e.g., survival by mutation status) → bar or grouped_bar

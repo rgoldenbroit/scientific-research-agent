@@ -1,6 +1,6 @@
 """
 Plotly chart generation tools for interactive HTML visualizations.
-Creates local HTML files that can be opened in any browser.
+Creates local HTML files and optionally uploads to Google Drive for shareable links.
 """
 import os
 from datetime import datetime
@@ -9,11 +9,60 @@ from pathlib import Path
 import plotly.graph_objects as go
 import plotly.express as px
 
+from tools.drive import save_to_drive
+
 # Default output directory - relative to project root
 DEFAULT_OUTPUT_DIR = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
     "output"
 )
+
+# Enable Drive uploads by default (set to False to disable)
+ENABLE_DRIVE_UPLOAD = os.environ.get("ENABLE_DRIVE_UPLOAD", "true").lower() == "true"
+
+
+def _upload_html_to_drive(file_path: str, description: str = None) -> dict:
+    """
+    Upload an HTML file to Google Drive and return shareable link.
+
+    Args:
+        file_path: Path to the local HTML file
+        description: Optional description for the file
+
+    Returns:
+        dict with drive_link (or None if upload failed/disabled)
+    """
+    if not ENABLE_DRIVE_UPLOAD:
+        return {"drive_link": None, "drive_status": "disabled"}
+
+    try:
+        with open(file_path, 'rb') as f:
+            file_content = f.read()
+
+        filename = os.path.basename(file_path)
+        result = save_to_drive(
+            file_content=file_content,
+            filename=filename,
+            mime_type="text/html",
+            description=description
+        )
+
+        if result.get("status") == "success":
+            return {
+                "drive_link": result.get("web_view_link"),
+                "drive_file_id": result.get("file_id"),
+                "drive_status": "uploaded"
+            }
+        else:
+            return {
+                "drive_link": None,
+                "drive_status": f"error: {result.get('message', 'unknown')}"
+            }
+    except Exception as e:
+        return {
+            "drive_link": None,
+            "drive_status": f"error: {str(e)}"
+        }
 
 
 def _ensure_output_dir(output_dir: str = None) -> str:
@@ -136,13 +185,27 @@ def create_plotly_chart(
             config={'displayModeBar': True, 'responsive': True}
         )
 
-        return {
+        # Upload to Google Drive for shareable link
+        drive_result = _upload_html_to_drive(
+            file_path,
+            description=f"Chart: {title}" if title else "Plotly chart"
+        )
+
+        result = {
             "status": "success",
             "file_path": file_path,
             "filename": f"{filename}.html",
             "chart_type": chart_type,
             "message": f"Created {chart_type} chart: {file_path}"
         }
+
+        # Add Drive link if available
+        if drive_result.get("drive_link"):
+            result["drive_link"] = drive_result["drive_link"]
+            result["message"] = f"Chart created and uploaded. View at: {drive_result['drive_link']}"
+        result["drive_status"] = drive_result.get("drive_status", "unknown")
+
+        return result
 
     except Exception as e:
         return {
@@ -223,13 +286,27 @@ def create_kaplan_meier_chart(
         file_path = os.path.join(output_path, f"{filename}.html")
         fig.write_html(file_path, full_html=True, include_plotlyjs=True)
 
-        return {
+        # Upload to Google Drive for shareable link
+        drive_result = _upload_html_to_drive(
+            file_path,
+            description=f"Survival Chart: {title}"
+        )
+
+        result = {
             "status": "success",
             "file_path": file_path,
             "filename": f"{filename}.html",
             "chart_type": "kaplan_meier",
             "message": f"Created Kaplan-Meier survival chart: {file_path}"
         }
+
+        # Add Drive link if available
+        if drive_result.get("drive_link"):
+            result["drive_link"] = drive_result["drive_link"]
+            result["message"] = f"Survival chart created and uploaded. View at: {drive_result['drive_link']}"
+        result["drive_status"] = drive_result.get("drive_status", "unknown")
+
+        return result
 
     except Exception as e:
         return {"status": "error", "message": f"Failed to create K-M chart: {str(e)}"}
@@ -389,13 +466,27 @@ def create_html_report(
         with open(file_path, 'w', encoding='utf-8') as f:
             f.write("\n".join(html_parts))
 
-        return {
+        # Upload to Google Drive for shareable link
+        drive_result = _upload_html_to_drive(
+            file_path,
+            description=f"Report: {title}"
+        )
+
+        result = {
             "status": "success",
             "file_path": file_path,
             "filename": f"{filename}.html",
             "sections_count": len(sections),
             "message": f"Created HTML report: {file_path}"
         }
+
+        # Add Drive link if available
+        if drive_result.get("drive_link"):
+            result["drive_link"] = drive_result["drive_link"]
+            result["message"] = f"Report created and uploaded. View at: {drive_result['drive_link']}"
+        result["drive_status"] = drive_result.get("drive_status", "unknown")
+
+        return result
 
     except Exception as e:
         return {"status": "error", "message": f"Failed to create report: {str(e)}"}
