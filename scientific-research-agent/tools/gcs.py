@@ -37,6 +37,58 @@ def _upload_to_gcs(data: dict, filename: str) -> str:
     return f"gs://{DATA_BUCKET}/datasets/{filename}"
 
 
+def upload_html_to_gcs(file_path: str, description: str = None) -> dict:
+    """
+    Upload an HTML file to GCS and return a public URL.
+
+    Args:
+        file_path: Path to the local HTML file
+        description: Optional description (unused, for API compatibility)
+
+    Returns:
+        dict with gcs_link (public URL) or error details
+    """
+    if not DATA_BUCKET:
+        return {
+            "gcs_link": None,
+            "gcs_status": "error: No bucket configured (AGENT_DATA_BUCKET not set)"
+        }
+
+    try:
+        # Read the HTML file
+        with open(file_path, 'rb') as f:
+            html_content = f.read()
+
+        filename = os.path.basename(file_path)
+
+        client = _get_storage_client()
+        bucket = client.bucket(DATA_BUCKET)
+        blob = bucket.blob(f"charts/{filename}")
+
+        # Upload with public read access
+        blob.upload_from_string(
+            html_content,
+            content_type="text/html"
+        )
+
+        # Make the blob publicly readable
+        blob.make_public()
+
+        # Return the public URL
+        public_url = f"https://storage.googleapis.com/{DATA_BUCKET}/charts/{filename}"
+
+        return {
+            "gcs_link": public_url,
+            "gcs_status": "uploaded"
+        }
+
+    except Exception as e:
+        return {
+            "gcs_link": None,
+            "gcs_status": f"error: {str(e)}"
+        }
+
+
 def _download_from_gcs(gcs_path: str) -> dict:
     """Download and parse JSON data from GCS."""
     if not gcs_path.startswith("gs://"):

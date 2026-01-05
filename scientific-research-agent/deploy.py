@@ -8,7 +8,7 @@ Before running:
 1. Replace YOUR_WORK_PROJECT_ID with your actual GCP project ID
 2. Ensure you've run: gcloud auth application-default login
 3. Ensure the staging bucket exists (see comments below)
-4. Enable Drive API: gcloud services enable drive.googleapis.com
+4. Make the data bucket publicly readable for chart sharing (see setup instructions)
 
 Usage: python3 deploy.py
 """
@@ -71,8 +71,7 @@ def main():
             "env_vars": {
                 "AGENT_DATA_BUCKET": DATA_BUCKET,
                 "AGENT_BQ_DATASET": BQ_DATASET,
-                "ENABLE_DRIVE_UPLOAD": "true",  # Enable Google Drive uploads for shareable links
-                "AGENT_DRIVE_FOLDER_ID": "1zVEOPAXaOyRAQe1OyA1Kcw4ZD_V6fssc",  # Shared Drive folder for charts/reports
+                "ENABLE_DRIVE_UPLOAD": "true",  # Enable cloud uploads for shareable links (uses GCS)
             }
         }
     )

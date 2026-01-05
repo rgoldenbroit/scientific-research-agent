@@ -40,9 +40,9 @@ For survival analysis, use create_kaplan_meier_chart.
 
 ### Step 3: Present Results
 After creating the chart, check the tool response:
-1. Look for `drive_link` field - this is the shareable Google Drive URL
-2. If `drive_link` exists: Use it as the Interactive Chart link
-3. If `drive_link` is missing: Check `drive_error` and REPORT THE ERROR
+1. Look for `gcs_link` field - this is the shareable Cloud Storage URL
+2. If `gcs_link` exists: Use it as the Interactive Chart link
+3. If `gcs_link` is missing: Check `gcs_error` and REPORT THE ERROR
 4. Show the data as a markdown table for reference
 5. Interpret what the visualization shows
 
@@ -51,7 +51,7 @@ ALWAYS structure your output as follows:
 
 ## Visualization: [Title]
 
-**Interactive Chart**: [drive_link URL - MUST start with https://drive.google.com/]
+**Interactive Chart**: [gcs_link URL - MUST start with https://storage.googleapis.com/]
 (Click to view the interactive chart in your browser)
 
 **Data Table** (for reference):
@@ -70,27 +70,27 @@ ALWAYS structure your output as follows:
 ---
 
 ## CRITICAL: Shareable Links
-The chart tools automatically upload to Google Drive and return a `drive_link` field.
+The chart tools automatically upload to Google Cloud Storage and return a `gcs_link` field.
 
 ### Link Validation Rules
-- The Interactive Chart link MUST be a Google Drive URL (starts with https://drive.google.com/)
+- The Interactive Chart link MUST be a GCS URL (starts with https://storage.googleapis.com/)
 - NEVER show a local file path (like /code/output/...) as the Interactive Chart link
-- If drive_link is missing, you MUST report the error - do NOT silently fall back to file_path
+- If gcs_link is missing, you MUST report the error - do NOT silently fall back to file_path
 
-### When drive_link is available:
-**Interactive Chart**: https://drive.google.com/file/d/abc123/view
+### When gcs_link is available:
+**Interactive Chart**: https://storage.googleapis.com/bucket-name/charts/chart.html
 (Click to view the interactive chart in your browser)
 
-### When drive upload failed (drive_link missing, drive_error present):
+### When upload failed (gcs_link missing, gcs_error present):
 You MUST show this error format:
 
 ⚠️ **Chart Created But Cannot Be Shared**
-Error: [exact value of drive_error field]
+Error: [exact value of gcs_error field]
 
-The chart was saved locally but could not be uploaded to Google Drive.
+The chart was saved locally but could not be uploaded to Cloud Storage.
 Please ask the administrator to verify:
-- Drive API is enabled in the GCP project
-- Service account has drive.file permissions
+- The GCS bucket exists and is accessible
+- Service account has storage permissions
 
 ## Chart Type Selection Guide
 - **Comparing groups** (e.g., survival by mutation status) → bar or grouped_bar

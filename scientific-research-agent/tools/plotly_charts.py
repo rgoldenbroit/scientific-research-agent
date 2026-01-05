@@ -9,7 +9,7 @@ from pathlib import Path
 import plotly.graph_objects as go
 import plotly.express as px
 
-from tools.drive import save_to_drive
+from tools.gcs import upload_html_to_gcs
 
 # Default output directory - relative to project root
 DEFAULT_OUTPUT_DIR = os.path.join(
@@ -17,52 +17,8 @@ DEFAULT_OUTPUT_DIR = os.path.join(
     "output"
 )
 
-# Enable Drive uploads by default (set to False to disable)
-ENABLE_DRIVE_UPLOAD = os.environ.get("ENABLE_DRIVE_UPLOAD", "true").lower() == "true"
-
-
-def _upload_html_to_drive(file_path: str, description: str = None) -> dict:
-    """
-    Upload an HTML file to Google Drive and return shareable link.
-
-    Args:
-        file_path: Path to the local HTML file
-        description: Optional description for the file
-
-    Returns:
-        dict with drive_link (or None if upload failed/disabled)
-    """
-    if not ENABLE_DRIVE_UPLOAD:
-        return {"drive_link": None, "drive_status": "disabled"}
-
-    try:
-        with open(file_path, 'rb') as f:
-            file_content = f.read()
-
-        filename = os.path.basename(file_path)
-        result = save_to_drive(
-            file_content=file_content,
-            filename=filename,
-            mime_type="text/html",
-            description=description
-        )
-
-        if result.get("status") == "success":
-            return {
-                "drive_link": result.get("web_view_link"),
-                "drive_file_id": result.get("file_id"),
-                "drive_status": "uploaded"
-            }
-        else:
-            return {
-                "drive_link": None,
-                "drive_status": f"error: {result.get('message', 'unknown')}"
-            }
-    except Exception as e:
-        return {
-            "drive_link": None,
-            "drive_status": f"error: {str(e)}"
-        }
+# Enable cloud uploads by default (set to False to disable)
+ENABLE_CLOUD_UPLOAD = os.environ.get("ENABLE_DRIVE_UPLOAD", "true").lower() == "true"
 
 
 def _ensure_output_dir(output_dir: str = None) -> str:
@@ -185,12 +141,6 @@ def create_plotly_chart(
             config={'displayModeBar': True, 'responsive': True}
         )
 
-        # Upload to Google Drive for shareable link
-        drive_result = _upload_html_to_drive(
-            file_path,
-            description=f"Chart: {title}" if title else "Plotly chart"
-        )
-
         result = {
             "status": "success",
             "file_path": file_path,
@@ -199,16 +149,21 @@ def create_plotly_chart(
             "message": f"Created {chart_type} chart: {file_path}"
         }
 
-        # Add Drive link if available
-        if drive_result.get("drive_link"):
-            result["drive_link"] = drive_result["drive_link"]
-            result["drive_status"] = "uploaded"
-            result["message"] = f"Chart uploaded successfully. Shareable link: {drive_result['drive_link']}"
+        # Upload to GCS for shareable link
+        if ENABLE_CLOUD_UPLOAD:
+            gcs_result = upload_html_to_gcs(file_path, description=f"Chart: {title}" if title else "Plotly chart")
+
+            if gcs_result.get("gcs_link"):
+                result["gcs_link"] = gcs_result["gcs_link"]
+                result["gcs_status"] = "uploaded"
+                result["message"] = f"Chart uploaded successfully. Shareable link: {gcs_result['gcs_link']}"
+            else:
+                result["gcs_error"] = gcs_result.get("gcs_status", "unknown error")
+                result["gcs_status"] = gcs_result.get("gcs_status", "failed")
+                result["message"] = f"GCS UPLOAD FAILED: {result['gcs_error']}. Chart saved locally but is NOT shareable."
         else:
-            # Include error details for troubleshooting - agent MUST report this error
-            result["drive_error"] = drive_result.get("drive_status", "unknown error")
-            result["drive_status"] = drive_result.get("drive_status", "failed")
-            result["message"] = f"DRIVE UPLOAD FAILED: {result['drive_error']}. Chart saved locally but is NOT shareable."
+            result["gcs_status"] = "disabled"
+            result["message"] = f"Created {chart_type} chart locally (cloud upload disabled)"
 
         return result
 
@@ -291,12 +246,6 @@ def create_kaplan_meier_chart(
         file_path = os.path.join(output_path, f"{filename}.html")
         fig.write_html(file_path, full_html=True, include_plotlyjs=True)
 
-        # Upload to Google Drive for shareable link
-        drive_result = _upload_html_to_drive(
-            file_path,
-            description=f"Survival Chart: {title}"
-        )
-
         result = {
             "status": "success",
             "file_path": file_path,
@@ -305,15 +254,21 @@ def create_kaplan_meier_chart(
             "message": f"Created Kaplan-Meier survival chart: {file_path}"
         }
 
-        # Add Drive link if available
-        if drive_result.get("drive_link"):
-            result["drive_link"] = drive_result["drive_link"]
-            result["drive_status"] = "uploaded"
-            result["message"] = f"Survival chart uploaded successfully. Shareable link: {drive_result['drive_link']}"
+        # Upload to GCS for shareable link
+        if ENABLE_CLOUD_UPLOAD:
+            gcs_result = upload_html_to_gcs(file_path, description=f"Survival Chart: {title}")
+
+            if gcs_result.get("gcs_link"):
+                result["gcs_link"] = gcs_result["gcs_link"]
+                result["gcs_status"] = "uploaded"
+                result["message"] = f"Survival chart uploaded successfully. Shareable link: {gcs_result['gcs_link']}"
+            else:
+                result["gcs_error"] = gcs_result.get("gcs_status", "unknown error")
+                result["gcs_status"] = gcs_result.get("gcs_status", "failed")
+                result["message"] = f"GCS UPLOAD FAILED: {result['gcs_error']}. Chart saved locally but is NOT shareable."
         else:
-            result["drive_error"] = drive_result.get("drive_status", "unknown error")
-            result["drive_status"] = drive_result.get("drive_status", "failed")
-            result["message"] = f"DRIVE UPLOAD FAILED: {result['drive_error']}. Chart saved locally but is NOT shareable."
+            result["gcs_status"] = "disabled"
+            result["message"] = f"Created survival chart locally (cloud upload disabled)"
 
         return result
 
@@ -475,12 +430,6 @@ def create_html_report(
         with open(file_path, 'w', encoding='utf-8') as f:
             f.write("\n".join(html_parts))
 
-        # Upload to Google Drive for shareable link
-        drive_result = _upload_html_to_drive(
-            file_path,
-            description=f"Report: {title}"
-        )
-
         result = {
             "status": "success",
             "file_path": file_path,
@@ -489,15 +438,21 @@ def create_html_report(
             "message": f"Created HTML report: {file_path}"
         }
 
-        # Add Drive link if available
-        if drive_result.get("drive_link"):
-            result["drive_link"] = drive_result["drive_link"]
-            result["drive_status"] = "uploaded"
-            result["message"] = f"Report uploaded successfully. Shareable link: {drive_result['drive_link']}"
+        # Upload to GCS for shareable link
+        if ENABLE_CLOUD_UPLOAD:
+            gcs_result = upload_html_to_gcs(file_path, description=f"Report: {title}")
+
+            if gcs_result.get("gcs_link"):
+                result["gcs_link"] = gcs_result["gcs_link"]
+                result["gcs_status"] = "uploaded"
+                result["message"] = f"Report uploaded successfully. Shareable link: {gcs_result['gcs_link']}"
+            else:
+                result["gcs_error"] = gcs_result.get("gcs_status", "unknown error")
+                result["gcs_status"] = gcs_result.get("gcs_status", "failed")
+                result["message"] = f"GCS UPLOAD FAILED: {result['gcs_error']}. Report saved locally but is NOT shareable."
         else:
-            result["drive_error"] = drive_result.get("drive_status", "unknown error")
-            result["drive_status"] = drive_result.get("drive_status", "failed")
-            result["message"] = f"DRIVE UPLOAD FAILED: {result['drive_error']}. Report saved locally but is NOT shareable."
+            result["gcs_status"] = "disabled"
+            result["message"] = f"Created report locally (cloud upload disabled)"
 
         return result
 
