@@ -99,7 +99,7 @@ When you have finished creating a visualization:
 visualization_agent = Agent(
     name="visualization_agent",
     description="Creates interactive HTML visualizations using Plotly. Queries BigQuery for data and generates charts that can be opened in a browser. Call this agent when analysis results need to be visualized as charts or graphs.",
-    model="gemini-3-flash-preview",
+    model="gemini-2.0-flash",
     instruction=VISUALIZATION_INSTRUCTION,
     tools=[
         execute_sql,

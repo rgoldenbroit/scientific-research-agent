@@ -2,6 +2,8 @@
 
 Multi-agent scientific research assistant built on Google ADK with Vertex AI Agent Engine.
 
+**Model**: `gemini-2.0-flash` (all agents)
+
 ## Architecture
 
 Hierarchical multi-agent system using LLM-driven delegation:
@@ -74,6 +76,7 @@ Key dependencies that must be in both files:
 |-------|-------|-----|
 | Agent Engine fails to start | Missing dependency in deploy.py | Sync deploy.py requirements with requirements.txt |
 | Import errors on deployment | Package not in deployment config | Add to deploy.py requirements list |
+| Model 404 NOT_FOUND | Invalid model name | Use `gemini-2.0-flash` (not preview models) |
 | BigQuery 403 error | Missing permissions | Grant BigQuery Data Viewer role |
 
 ## Testing
