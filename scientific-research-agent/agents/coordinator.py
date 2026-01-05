@@ -164,7 +164,7 @@ Example flow:
 research_coordinator = Agent(
     name="research_coordinator",
     description="Orchestrates multi-agent research workflow by delegating to specialized sub-agents for ideation, analysis, visualization, and writing.",
-    model="gemini-3-flash-preview",
+    model="gemini-2.5-flash-preview",
     instruction=COORDINATOR_INSTRUCTION,
     # Use sub_agents for LLM-driven delegation (transfer_to_agent)
     # This avoids the "Tool use with function calling is unsupported" error

@@ -123,7 +123,7 @@ Do NOT try to query databases yourself - that's the visualization_agent's job.
 writer_agent = Agent(
     name="writer_agent",
     description="Drafts research documents as HTML reports or formatted markdown. Creates grant proposals, manuscript sections, and technical reports. Can embed Plotly charts into HTML reports for polished, exportable documents.",
-    model="gemini-3-flash-preview",
+    model="gemini-2.5-flash-preview",
     instruction=WRITER_INSTRUCTION,
     tools=[
         create_html_report,

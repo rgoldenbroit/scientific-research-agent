@@ -2,7 +2,10 @@
 
 Multi-agent scientific research assistant built on Google ADK with Vertex AI Agent Engine.
 
-**Model**: `gemini-3-flash-preview` (all agents)
+**Model**: `gemini-2.5-flash-preview` (all agents)
+
+> **Note**: Gemini 3 models require `global` location but Agent Engine requires `us-central1`.
+> See [Issue #3628](https://github.com/google/adk-python/issues/3628) for status.
 
 ## Architecture
 
