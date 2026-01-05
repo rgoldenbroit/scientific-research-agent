@@ -202,11 +202,13 @@ def create_plotly_chart(
         # Add Drive link if available
         if drive_result.get("drive_link"):
             result["drive_link"] = drive_result["drive_link"]
-            result["message"] = f"Chart created and uploaded. View at: {drive_result['drive_link']}"
+            result["drive_status"] = "uploaded"
+            result["message"] = f"Chart uploaded successfully. Shareable link: {drive_result['drive_link']}"
         else:
-            # Include error details for troubleshooting
+            # Include error details for troubleshooting - agent MUST report this error
             result["drive_error"] = drive_result.get("drive_status", "unknown error")
-        result["drive_status"] = drive_result.get("drive_status", "unknown")
+            result["drive_status"] = drive_result.get("drive_status", "failed")
+            result["message"] = f"DRIVE UPLOAD FAILED: {result['drive_error']}. Chart saved locally but is NOT shareable."
 
         return result
 
@@ -306,10 +308,12 @@ def create_kaplan_meier_chart(
         # Add Drive link if available
         if drive_result.get("drive_link"):
             result["drive_link"] = drive_result["drive_link"]
-            result["message"] = f"Survival chart created and uploaded. View at: {drive_result['drive_link']}"
+            result["drive_status"] = "uploaded"
+            result["message"] = f"Survival chart uploaded successfully. Shareable link: {drive_result['drive_link']}"
         else:
             result["drive_error"] = drive_result.get("drive_status", "unknown error")
-        result["drive_status"] = drive_result.get("drive_status", "unknown")
+            result["drive_status"] = drive_result.get("drive_status", "failed")
+            result["message"] = f"DRIVE UPLOAD FAILED: {result['drive_error']}. Chart saved locally but is NOT shareable."
 
         return result
 
@@ -488,10 +492,12 @@ def create_html_report(
         # Add Drive link if available
         if drive_result.get("drive_link"):
             result["drive_link"] = drive_result["drive_link"]
-            result["message"] = f"Report created and uploaded. View at: {drive_result['drive_link']}"
+            result["drive_status"] = "uploaded"
+            result["message"] = f"Report uploaded successfully. Shareable link: {drive_result['drive_link']}"
         else:
             result["drive_error"] = drive_result.get("drive_status", "unknown error")
-        result["drive_status"] = drive_result.get("drive_status", "unknown")
+            result["drive_status"] = drive_result.get("drive_status", "failed")
+            result["message"] = f"DRIVE UPLOAD FAILED: {result['drive_error']}. Report saved locally but is NOT shareable."
 
         return result
 

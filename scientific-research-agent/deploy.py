@@ -8,6 +8,7 @@ Before running:
 1. Replace YOUR_WORK_PROJECT_ID with your actual GCP project ID
 2. Ensure you've run: gcloud auth application-default login
 3. Ensure the staging bucket exists (see comments below)
+4. Enable Drive API: gcloud services enable drive.googleapis.com
 
 Usage: python3 deploy.py
 """
@@ -69,7 +70,8 @@ def main():
             "staging_bucket": STAGING_BUCKET,
             "env_vars": {
                 "AGENT_DATA_BUCKET": DATA_BUCKET,
-                "AGENT_BQ_DATASET": BQ_DATASET
+                "AGENT_BQ_DATASET": BQ_DATASET,
+                "ENABLE_DRIVE_UPLOAD": "true",  # Enable Google Drive uploads for shareable links
             }
         }
     )

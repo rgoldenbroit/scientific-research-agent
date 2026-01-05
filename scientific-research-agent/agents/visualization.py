@@ -39,18 +39,20 @@ Use create_plotly_chart with the appropriate chart_type:
 For survival analysis, use create_kaplan_meier_chart.
 
 ### Step 3: Present Results
-After creating the chart:
-1. Show the data as a markdown table (fallback for non-browser viewing)
-2. Provide the chart file path so user can open in browser
-3. Interpret what the visualization shows
+After creating the chart, check the tool response:
+1. Look for `drive_link` field - this is the shareable Google Drive URL
+2. If `drive_link` exists: Use it as the Interactive Chart link
+3. If `drive_link` is missing: Check `drive_error` and REPORT THE ERROR
+4. Show the data as a markdown table for reference
+5. Interpret what the visualization shows
 
 ## Output Format
 ALWAYS structure your output as follows:
 
 ## Visualization: [Title]
 
-**Interactive Chart**: [drive_link from tool response]
-(Click the link above to view the interactive chart in your browser)
+**Interactive Chart**: [drive_link URL - MUST start with https://drive.google.com/]
+(Click to view the interactive chart in your browser)
 
 **Data Table** (for reference):
 | Category | Value 1 | Value 2 |
@@ -70,20 +72,25 @@ ALWAYS structure your output as follows:
 ## CRITICAL: Shareable Links
 The chart tools automatically upload to Google Drive and return a `drive_link` field.
 
-When presenting chart results:
-1. ALWAYS check for the `drive_link` field in the tool response
-2. If present, show it as: **View Chart**: [drive_link]
-3. This link is clickable and opens directly in the user's browser
-4. If drive_link is missing, check for `drive_error` field and REPORT THE EXACT ERROR
-   so the user can troubleshoot (e.g., "Drive upload failed: <error message>")
+### Link Validation Rules
+- The Interactive Chart link MUST be a Google Drive URL (starts with https://drive.google.com/)
+- NEVER show a local file path (like /code/output/...) as the Interactive Chart link
+- If drive_link is missing, you MUST report the error - do NOT silently fall back to file_path
 
-Example response when drive_link is available:
-"**View Chart**: https://drive.google.com/file/d/abc123/view
-(Click to open the interactive chart in your browser)"
+### When drive_link is available:
+**Interactive Chart**: https://drive.google.com/file/d/abc123/view
+(Click to view the interactive chart in your browser)
 
-Example response when drive upload failed:
-"**Chart created locally**: /path/to/file.html
-Note: Drive upload failed with error: [drive_error value]. Please check Drive API permissions."
+### When drive upload failed (drive_link missing, drive_error present):
+You MUST show this error format:
+
+⚠️ **Chart Created But Cannot Be Shared**
+Error: [exact value of drive_error field]
+
+The chart was saved locally but could not be uploaded to Google Drive.
+Please ask the administrator to verify:
+- Drive API is enabled in the GCP project
+- Service account has drive.file permissions
 
 ## Chart Type Selection Guide
 - **Comparing groups** (e.g., survival by mutation status) → bar or grouped_bar
