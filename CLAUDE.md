@@ -2,10 +2,10 @@
 
 Multi-agent scientific research assistant built on Google ADK with Vertex AI Agent Engine.
 
-**Model**: `gemini-2.5-flash-preview` (all agents)
+**Model**: `gemini-2.5-flash` (all agents)
 
-> **Note**: Gemini 3 models require `global` location but Agent Engine requires `us-central1`.
-> See [Issue #3628](https://github.com/google/adk-python/issues/3628) for status.
+> **Note**: Preview models (e.g., `gemini-3-flash-preview`, `gemini-2.5-flash-preview`) may not be available in `us-central1`.
+> Use GA model names without `-preview` suffix. See [Vertex AI Locations](https://docs.cloud.google.com/vertex-ai/generative-ai/docs/learn/locations).
 
 ## Architecture
 
