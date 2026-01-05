@@ -72,6 +72,7 @@ def main():
                 "AGENT_DATA_BUCKET": DATA_BUCKET,
                 "AGENT_BQ_DATASET": BQ_DATASET,
                 "ENABLE_DRIVE_UPLOAD": "true",  # Enable Google Drive uploads for shareable links
+                "AGENT_DRIVE_FOLDER_ID": "1zVEOPAXaOyRAQe1OyA1Kcw4ZD_V6fssc",  # Shared Drive folder for charts/reports
             }
         }
     )
