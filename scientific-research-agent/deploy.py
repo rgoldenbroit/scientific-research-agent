@@ -18,7 +18,7 @@ from main import app
 # CONFIGURATION - UPDATE THESE VALUES
 # =============================================================================
 PROJECT_ID = "YOUR_WORK_PROJECT_ID"      # Replace with your work GCP project ID
-LOCATION = "us-central1"                  # Or your preferred region
+LOCATION = "global"                       # Required for gemini-3-flash-preview
 STAGING_BUCKET = f"gs://{PROJECT_ID}-agent-staging"
 DATA_BUCKET = f"{PROJECT_ID}-agent-data"  # Bucket for storing generated datasets
 BQ_DATASET = "research_agent_data"        # BigQuery dataset for storing data
