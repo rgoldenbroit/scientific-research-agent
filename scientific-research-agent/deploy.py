@@ -18,7 +18,7 @@ from main import app
 # =============================================================================
 # CONFIGURATION - UPDATE THESE VALUES
 # =============================================================================
-PROJECT_ID = "YOUR_WORK_PROJECT_ID"      # Replace with your work GCP project ID
+PROJECT_ID = "second-impact-444322-p8"   # GCP project ID
 LOCATION = "us-central1"                  # Agent Engine requires us-central1
 STAGING_BUCKET = f"gs://{PROJECT_ID}-agent-staging"
 DATA_BUCKET = f"{PROJECT_ID}-agent-data"  # Bucket for storing generated datasets
