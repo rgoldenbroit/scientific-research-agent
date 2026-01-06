@@ -71,30 +71,57 @@ def upload_html_to_gcs(file_path: str, description: str = None) -> dict:
             content_type="text/html"
         )
 
-        # Try to generate a signed URL (works with uniform bucket-level access)
-        # Signed URLs are valid for 7 days
-        try:
+        # Generate a signed URL using IAM-based signing (works in cloud environments
+        # like Vertex AI where we don't have direct access to service account keys)
+        import google.auth
+        from google.auth.transport import requests as auth_requests
+
+        credentials, project = google.auth.default()
+
+        # Refresh credentials to ensure they're valid
+        auth_request = auth_requests.Request()
+        credentials.refresh(auth_request)
+
+        # Get service account email for IAM signing
+        service_account_email = getattr(credentials, 'service_account_email', None)
+
+        if not service_account_email:
+            # Try to get from metadata server (for compute engine environments)
+            try:
+                import requests
+                resp = requests.get(
+                    'http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/email',
+                    headers={'Metadata-Flavor': 'Google'},
+                    timeout=2
+                )
+                service_account_email = resp.text
+            except Exception:
+                pass
+
+        if service_account_email:
+            # Use IAM signing - this works in cloud environments
+            signed_url = blob.generate_signed_url(
+                version="v4",
+                expiration=timedelta(days=7),
+                method="GET",
+                service_account_email=service_account_email,
+                access_token=credentials.token,
+            )
+        else:
+            # Fallback: try direct signing (works with service account keys)
             signed_url = blob.generate_signed_url(
                 version="v4",
                 expiration=timedelta(days=7),
                 method="GET"
             )
-            return {
-                "gcs_link": signed_url,
-                "gcs_status": "uploaded",
-                "url_type": "signed",
-                "expires_in": "7 days"
-            }
-        except Exception as sign_error:
-            # If signed URL fails (e.g., no service account key), try public URL
-            # This works if bucket has allUsers read access via IAM
-            public_url = f"https://storage.googleapis.com/{DATA_BUCKET}/charts/{filename}"
-            return {
-                "gcs_link": public_url,
-                "gcs_status": "uploaded",
-                "url_type": "public",
-                "note": f"Using public URL (signed URL failed: {str(sign_error)[:100]})"
-            }
+
+        return {
+            "gcs_link": signed_url,
+            "gcs_status": "uploaded",
+            "url_type": "signed",
+            "expires_in": "7 days",
+            "service_account": service_account_email
+        }
 
     except Exception as e:
         return {
