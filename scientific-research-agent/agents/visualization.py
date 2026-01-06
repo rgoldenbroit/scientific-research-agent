@@ -90,12 +90,22 @@ Transform query results into this format before calling the function.
 - **Survival analysis** → use create_kaplan_meier_chart
 
 ## Error Handling
-When a tool returns a result with `"status": "error"`, you MUST:
-1. Report the exact error message to the user
-2. Explain what likely went wrong
-3. Suggest how to fix it
+When a tool returns a result with `"status": "error"` or `"status": "partial_success"`:
+1. Report the issue briefly (don't dump full error text)
+2. Fall back to create_plotly_chart which saves to GCS
 
-If Google Sheets fails, fall back to create_plotly_chart for local HTML files.
+### Fallback Flow
+1. Try create_spreadsheet_with_chart (Google Sheets) first
+2. If it fails with permissions error → use create_plotly_chart instead
+3. The Plotly chart returns a `console_url` - present this as:
+
+**View Chart**: [console_url]
+(Requires GCP console access - log in with your Google Cloud account)
+
+### Important Notes on Console Links
+- Console links require the user to be logged into Google Cloud Console
+- They provide direct access to the file in GCS
+- This is a fallback when Google Sheets permissions aren't available
 
 ## CRITICAL: Handoff Back to Coordinator
 When you have finished creating a visualization:

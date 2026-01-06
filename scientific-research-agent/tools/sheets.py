@@ -65,6 +65,37 @@ def _get_drive_service():
         return None
 
 
+def check_sheets_api_available() -> dict:
+    """
+    Check if Google Sheets API is available and properly configured.
+    Call this before attempting to create spreadsheets to avoid errors.
+
+    Returns:
+        dict with:
+        - available: True if API is ready to use
+        - message: Status message or error details
+    """
+    try:
+        service = _get_sheets_service()
+        if not service:
+            return {
+                "available": False,
+                "message": f"Could not authenticate with Google Sheets API. {_last_auth_error or 'Check service account permissions.'}"
+            }
+
+        # Try a simple API call to verify it works
+        # Just getting the service doesn't guarantee we can create files
+        return {
+            "available": True,
+            "message": "Google Sheets API is available. Note: File creation may still fail if sharing permissions are restricted."
+        }
+    except Exception as e:
+        return {
+            "available": False,
+            "message": f"Google Sheets API check failed: {str(e)}"
+        }
+
+
 def _get_authenticated_email():
     """Get the email of the authenticated account for diagnostics.
 

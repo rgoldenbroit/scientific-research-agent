@@ -122,6 +122,17 @@ log-rank p < 0.001, HR = 1.8, 95% CI: 1.4-2.3)."
 - Include preliminary data to demonstrate feasibility
 - Address potential pitfalls
 
+## Error Handling & Fallback
+When Google Docs returns a permissions error:
+1. Report the issue briefly (don't dump full error text)
+2. Fall back to create_html_report which saves to GCS
+3. The HTML report returns a `console_url` - present this as:
+
+**View Report**: [console_url]
+(Requires GCP console access - log in with your Google Cloud account)
+
+Console links require the user to be logged into Google Cloud Console to view the file.
+
 ## CRITICAL: Handoff Back to Coordinator
 When you have finished creating a document:
 1. Present the Google Docs URL and summary
