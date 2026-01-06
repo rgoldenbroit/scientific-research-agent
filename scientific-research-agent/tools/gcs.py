@@ -5,7 +5,7 @@ import json
 import os
 import random
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from google.cloud import storage
 
@@ -39,14 +39,14 @@ def _upload_to_gcs(data: dict, filename: str) -> str:
 
 def upload_html_to_gcs(file_path: str, description: str = None) -> dict:
     """
-    Upload an HTML file to GCS and return a public URL.
+    Upload an HTML file to GCS and return a shareable URL.
 
     Args:
         file_path: Path to the local HTML file
         description: Optional description (unused, for API compatibility)
 
     Returns:
-        dict with gcs_link (public URL) or error details
+        dict with gcs_link (signed URL or public URL) or error details
     """
     if not DATA_BUCKET:
         return {
@@ -65,22 +65,36 @@ def upload_html_to_gcs(file_path: str, description: str = None) -> dict:
         bucket = client.bucket(DATA_BUCKET)
         blob = bucket.blob(f"charts/{filename}")
 
-        # Upload with public read access
+        # Upload the file
         blob.upload_from_string(
             html_content,
             content_type="text/html"
         )
 
-        # Make the blob publicly readable
-        blob.make_public()
-
-        # Return the public URL
-        public_url = f"https://storage.googleapis.com/{DATA_BUCKET}/charts/{filename}"
-
-        return {
-            "gcs_link": public_url,
-            "gcs_status": "uploaded"
-        }
+        # Try to generate a signed URL (works with uniform bucket-level access)
+        # Signed URLs are valid for 7 days
+        try:
+            signed_url = blob.generate_signed_url(
+                version="v4",
+                expiration=timedelta(days=7),
+                method="GET"
+            )
+            return {
+                "gcs_link": signed_url,
+                "gcs_status": "uploaded",
+                "url_type": "signed",
+                "expires_in": "7 days"
+            }
+        except Exception as sign_error:
+            # If signed URL fails (e.g., no service account key), try public URL
+            # This works if bucket has allUsers read access via IAM
+            public_url = f"https://storage.googleapis.com/{DATA_BUCKET}/charts/{filename}"
+            return {
+                "gcs_link": public_url,
+                "gcs_status": "uploaded",
+                "url_type": "public",
+                "note": f"Using public URL (signed URL failed: {str(sign_error)[:100]})"
+            }
 
     except Exception as e:
         return {
