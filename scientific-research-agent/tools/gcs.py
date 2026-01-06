@@ -75,16 +75,12 @@ def upload_html_to_gcs(file_path: str, description: str = None) -> dict:
         gcs_uri = f"gs://{DATA_BUCKET}/charts/{filename}"
         console_url = f"https://console.cloud.google.com/storage/browser/_details/{DATA_BUCKET}/charts/{filename}?project={os.environ.get('PROJECT_ID', '')}"
 
-        # Read the HTML content to include in response
-        html_content_str = html_content.decode('utf-8') if isinstance(html_content, bytes) else html_content
-
         return {
             "gcs_link": console_url,
             "gcs_uri": gcs_uri,
             "console_url": console_url,
             "gcs_status": "uploaded",
             "url_type": "console",
-            "html_content": html_content_str,
             "message": f"Chart uploaded to {gcs_uri}. View in Cloud Console: {console_url}"
         }
 

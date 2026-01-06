@@ -158,9 +158,6 @@ def create_plotly_chart(
                 result["console_url"] = gcs_result.get("console_url")
                 result["gcs_status"] = "uploaded"
                 result["message"] = f"Chart uploaded! View in Cloud Console: {gcs_result.get('console_url')}"
-                # Include HTML content for inline display
-                if gcs_result.get("html_content"):
-                    result["html_content"] = gcs_result["html_content"]
             else:
                 result["gcs_error"] = gcs_result.get("gcs_status", "unknown error")
                 result["gcs_status"] = gcs_result.get("gcs_status", "failed")
@@ -267,8 +264,6 @@ def create_kaplan_meier_chart(
                 result["console_url"] = gcs_result.get("console_url")
                 result["gcs_status"] = "uploaded"
                 result["message"] = f"Survival chart uploaded! View in Cloud Console: {gcs_result.get('console_url')}"
-                if gcs_result.get("html_content"):
-                    result["html_content"] = gcs_result["html_content"]
             else:
                 result["gcs_error"] = gcs_result.get("gcs_status", "unknown error")
                 result["gcs_status"] = gcs_result.get("gcs_status", "failed")
@@ -454,8 +449,6 @@ def create_html_report(
                 result["console_url"] = gcs_result.get("console_url")
                 result["gcs_status"] = "uploaded"
                 result["message"] = f"Report uploaded! View in Cloud Console: {gcs_result.get('console_url')}"
-                if gcs_result.get("html_content"):
-                    result["html_content"] = gcs_result["html_content"]
             else:
                 result["gcs_error"] = gcs_result.get("gcs_status", "unknown error")
                 result["gcs_status"] = gcs_result.get("gcs_status", "failed")
