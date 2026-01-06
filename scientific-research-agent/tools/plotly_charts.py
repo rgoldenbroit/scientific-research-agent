@@ -149,18 +149,22 @@ def create_plotly_chart(
             "message": f"Created {chart_type} chart: {file_path}"
         }
 
-        # Upload to GCS for shareable link
+        # Upload to GCS
         if ENABLE_CLOUD_UPLOAD:
             gcs_result = upload_html_to_gcs(file_path, description=f"Chart: {title}" if title else "Plotly chart")
 
-            if gcs_result.get("gcs_link"):
-                result["gcs_link"] = gcs_result["gcs_link"]
+            if gcs_result.get("gcs_status") == "uploaded":
+                result["gcs_uri"] = gcs_result.get("gcs_uri")
+                result["console_url"] = gcs_result.get("console_url")
                 result["gcs_status"] = "uploaded"
-                result["message"] = f"Chart uploaded successfully. Shareable link: {gcs_result['gcs_link']}"
+                result["message"] = f"Chart uploaded! View in Cloud Console: {gcs_result.get('console_url')}"
+                # Include HTML content for inline display
+                if gcs_result.get("html_content"):
+                    result["html_content"] = gcs_result["html_content"]
             else:
                 result["gcs_error"] = gcs_result.get("gcs_status", "unknown error")
                 result["gcs_status"] = gcs_result.get("gcs_status", "failed")
-                result["message"] = f"GCS UPLOAD FAILED: {result['gcs_error']}. Chart saved locally but is NOT shareable."
+                result["message"] = f"GCS UPLOAD FAILED: {result['gcs_error']}. Chart saved locally."
         else:
             result["gcs_status"] = "disabled"
             result["message"] = f"Created {chart_type} chart locally (cloud upload disabled)"
@@ -254,18 +258,21 @@ def create_kaplan_meier_chart(
             "message": f"Created Kaplan-Meier survival chart: {file_path}"
         }
 
-        # Upload to GCS for shareable link
+        # Upload to GCS
         if ENABLE_CLOUD_UPLOAD:
             gcs_result = upload_html_to_gcs(file_path, description=f"Survival Chart: {title}")
 
-            if gcs_result.get("gcs_link"):
-                result["gcs_link"] = gcs_result["gcs_link"]
+            if gcs_result.get("gcs_status") == "uploaded":
+                result["gcs_uri"] = gcs_result.get("gcs_uri")
+                result["console_url"] = gcs_result.get("console_url")
                 result["gcs_status"] = "uploaded"
-                result["message"] = f"Survival chart uploaded successfully. Shareable link: {gcs_result['gcs_link']}"
+                result["message"] = f"Survival chart uploaded! View in Cloud Console: {gcs_result.get('console_url')}"
+                if gcs_result.get("html_content"):
+                    result["html_content"] = gcs_result["html_content"]
             else:
                 result["gcs_error"] = gcs_result.get("gcs_status", "unknown error")
                 result["gcs_status"] = gcs_result.get("gcs_status", "failed")
-                result["message"] = f"GCS UPLOAD FAILED: {result['gcs_error']}. Chart saved locally but is NOT shareable."
+                result["message"] = f"GCS UPLOAD FAILED: {result['gcs_error']}. Chart saved locally."
         else:
             result["gcs_status"] = "disabled"
             result["message"] = f"Created survival chart locally (cloud upload disabled)"
@@ -438,18 +445,21 @@ def create_html_report(
             "message": f"Created HTML report: {file_path}"
         }
 
-        # Upload to GCS for shareable link
+        # Upload to GCS
         if ENABLE_CLOUD_UPLOAD:
             gcs_result = upload_html_to_gcs(file_path, description=f"Report: {title}")
 
-            if gcs_result.get("gcs_link"):
-                result["gcs_link"] = gcs_result["gcs_link"]
+            if gcs_result.get("gcs_status") == "uploaded":
+                result["gcs_uri"] = gcs_result.get("gcs_uri")
+                result["console_url"] = gcs_result.get("console_url")
                 result["gcs_status"] = "uploaded"
-                result["message"] = f"Report uploaded successfully. Shareable link: {gcs_result['gcs_link']}"
+                result["message"] = f"Report uploaded! View in Cloud Console: {gcs_result.get('console_url')}"
+                if gcs_result.get("html_content"):
+                    result["html_content"] = gcs_result["html_content"]
             else:
                 result["gcs_error"] = gcs_result.get("gcs_status", "unknown error")
                 result["gcs_status"] = gcs_result.get("gcs_status", "failed")
-                result["message"] = f"GCS UPLOAD FAILED: {result['gcs_error']}. Report saved locally but is NOT shareable."
+                result["message"] = f"GCS UPLOAD FAILED: {result['gcs_error']}. Report saved locally."
         else:
             result["gcs_status"] = "disabled"
             result["message"] = f"Created report locally (cloud upload disabled)"

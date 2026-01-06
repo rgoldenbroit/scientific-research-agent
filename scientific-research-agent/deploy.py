@@ -69,6 +69,7 @@ def main():
             "extra_packages": ["./agents", "./tools"],
             "staging_bucket": STAGING_BUCKET,
             "env_vars": {
+                "PROJECT_ID": PROJECT_ID,
                 "AGENT_DATA_BUCKET": DATA_BUCKET,
                 "AGENT_BQ_DATASET": BQ_DATASET,
                 "ENABLE_DRIVE_UPLOAD": "true",  # Enable cloud uploads for shareable links (uses GCS)

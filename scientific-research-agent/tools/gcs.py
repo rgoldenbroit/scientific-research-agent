@@ -71,56 +71,21 @@ def upload_html_to_gcs(file_path: str, description: str = None) -> dict:
             content_type="text/html"
         )
 
-        # Generate a signed URL using IAM-based signing (works in cloud environments
-        # like Vertex AI where we don't have direct access to service account keys)
-        import google.auth
-        from google.auth.transport import requests as auth_requests
+        # Build URLs for accessing the file
+        gcs_uri = f"gs://{DATA_BUCKET}/charts/{filename}"
+        console_url = f"https://console.cloud.google.com/storage/browser/_details/{DATA_BUCKET}/charts/{filename}?project={os.environ.get('PROJECT_ID', '')}"
 
-        credentials, project = google.auth.default()
-
-        # Refresh credentials to ensure they're valid
-        auth_request = auth_requests.Request()
-        credentials.refresh(auth_request)
-
-        # Get service account email for IAM signing
-        service_account_email = getattr(credentials, 'service_account_email', None)
-
-        if not service_account_email:
-            # Try to get from metadata server (for compute engine environments)
-            try:
-                import requests
-                resp = requests.get(
-                    'http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/email',
-                    headers={'Metadata-Flavor': 'Google'},
-                    timeout=2
-                )
-                service_account_email = resp.text
-            except Exception:
-                pass
-
-        if service_account_email:
-            # Use IAM signing - this works in cloud environments
-            signed_url = blob.generate_signed_url(
-                version="v4",
-                expiration=timedelta(days=7),
-                method="GET",
-                service_account_email=service_account_email,
-                access_token=credentials.token,
-            )
-        else:
-            # Fallback: try direct signing (works with service account keys)
-            signed_url = blob.generate_signed_url(
-                version="v4",
-                expiration=timedelta(days=7),
-                method="GET"
-            )
+        # Read the HTML content to include in response
+        html_content_str = html_content.decode('utf-8') if isinstance(html_content, bytes) else html_content
 
         return {
-            "gcs_link": signed_url,
+            "gcs_link": console_url,
+            "gcs_uri": gcs_uri,
+            "console_url": console_url,
             "gcs_status": "uploaded",
-            "url_type": "signed",
-            "expires_in": "7 days",
-            "service_account": service_account_email
+            "url_type": "console",
+            "html_content": html_content_str,
+            "message": f"Chart uploaded to {gcs_uri}. View in Cloud Console: {console_url}"
         }
 
     except Exception as e:
