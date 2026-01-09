@@ -171,8 +171,13 @@ def execute_sql(sql_query: str) -> dict:
 
     try:
         client = _get_bigquery_client()
-        query_job = client.query(sql_query)
-        results = query_job.result()
+        # Set query timeout to prevent long-running queries from hanging
+        job_config = bigquery.QueryJobConfig(
+            timeout_ms=60000  # 60 second timeout
+        )
+        query_job = client.query(sql_query, job_config=job_config)
+        # Also set a timeout on waiting for results
+        results = query_job.result(timeout=60)
 
         rows = []
         for row in results:
@@ -187,7 +192,9 @@ def execute_sql(sql_query: str) -> dict:
     except Exception as e:
         error_msg = str(e)
         # Provide more context for common errors
-        if "403" in error_msg or "Access Denied" in error_msg:
+        if "timeout" in error_msg.lower() or "Timeout" in error_msg:
+            error_msg = f"Query timed out after 60 seconds. Try simplifying the query or adding LIMIT clause: {error_msg}"
+        elif "403" in error_msg or "Access Denied" in error_msg:
             error_msg = f"BigQuery access denied: {error_msg}. Check that the service account has BigQuery permissions."
         elif "404" in error_msg or "Not found" in error_msg:
             error_msg = f"Table or dataset not found: {error_msg}. Verify the table path is correct (project.dataset.table)."

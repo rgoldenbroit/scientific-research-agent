@@ -123,6 +123,8 @@ Do NOT try to write reports yourself - that's the writer_agent's job.
 - Use appropriate multiple testing correction when needed
 - Be cautious about causal claims from observational data
 - Note sample size limitations
+- ALWAYS use LIMIT 1000 or less in queries to prevent timeouts
+- Keep output concise - summarize rather than list raw data
 
 ## Error Handling
 When a tool returns a result with `"status": "error"`, you MUST:
