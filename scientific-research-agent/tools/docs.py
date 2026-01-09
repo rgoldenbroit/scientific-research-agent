@@ -145,7 +145,7 @@ def create_google_doc(
                     body={"type": "anyone", "role": "reader"}
                 ).execute()
             except Exception as perm_error:
-                permission_warning = f"Warning: Could not make document public ({str(perm_error)}). File may only be accessible to the service account."
+                permission_warning = "Document created but not shared publicly. You can access it via the link or share it manually in Google Drive."
         else:
             permission_warning = "Warning: Drive service not available. File may only be accessible to the service account."
 

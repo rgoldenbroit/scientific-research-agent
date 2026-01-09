@@ -74,6 +74,10 @@ def main():
                 "AGENT_DATA_BUCKET": DATA_BUCKET,
                 "AGENT_BQ_DATASET": BQ_DATASET,
                 "ENABLE_DRIVE_UPLOAD": "true",  # Enable cloud uploads for shareable links (uses GCS)
+                # Gmail domain-wide delegation: Set to a user email in your Workspace domain
+                # Requires: 1) Gmail API enabled, 2) Domain-wide delegation on service account,
+                # 3) Scopes authorized in Workspace Admin (admin.google.com)
+                "GMAIL_IMPERSONATE_EMAIL": "admin@rgoldenbroit.altostrat.com",
             }
         }
     )

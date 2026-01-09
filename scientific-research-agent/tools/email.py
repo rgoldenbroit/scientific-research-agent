@@ -23,10 +23,19 @@ _last_auth_error = None
 
 
 def _get_credentials():
-    """Get Google credentials for Gmail API."""
+    """Get Google credentials for Gmail API with domain-wide delegation support."""
     global _last_auth_error
+
+    # Get the email to impersonate from environment (required for domain-wide delegation)
+    impersonate_email = os.environ.get("GMAIL_IMPERSONATE_EMAIL")
+
     try:
         credentials, project = default(scopes=SCOPES)
+
+        # For service accounts, add impersonation if configured
+        if impersonate_email and hasattr(credentials, 'with_subject'):
+            credentials = credentials.with_subject(impersonate_email)
+
         _last_auth_error = None
         return credentials
     except Exception as e:
@@ -37,6 +46,9 @@ def _get_credentials():
                 credentials = service_account.Credentials.from_service_account_file(
                     sa_key_path, scopes=SCOPES
                 )
+                # Add impersonation for service account key auth
+                if impersonate_email:
+                    credentials = credentials.with_subject(impersonate_email)
                 _last_auth_error = None
                 return credentials
             except Exception as e2:
@@ -128,7 +140,9 @@ def send_email(
     except Exception as e:
         error_msg = str(e)
         # Provide helpful error messages for common issues
-        if "insufficientPermissions" in error_msg:
+        if "Precondition check failed" in error_msg:
+            error_msg = "Gmail API requires domain-wide delegation. Set GMAIL_IMPERSONATE_EMAIL env var and configure delegation in Google Workspace Admin."
+        elif "insufficientPermissions" in error_msg:
             error_msg = "Gmail API permissions not configured. Service account needs domain-wide delegation with Gmail send scope."
         elif "accessNotConfigured" in error_msg:
             error_msg = "Gmail API not enabled in GCP project. Enable it at console.cloud.google.com/apis/library/gmail.googleapis.com"
@@ -191,7 +205,9 @@ def create_draft(
 
     except Exception as e:
         error_msg = str(e)
-        if "insufficientPermissions" in error_msg:
+        if "Precondition check failed" in error_msg:
+            error_msg = "Gmail API requires domain-wide delegation. Set GMAIL_IMPERSONATE_EMAIL env var and configure delegation in Google Workspace Admin."
+        elif "insufficientPermissions" in error_msg:
             error_msg = "Gmail API permissions not configured. Service account needs domain-wide delegation."
         elif "accessNotConfigured" in error_msg:
             error_msg = "Gmail API not enabled in GCP project."
