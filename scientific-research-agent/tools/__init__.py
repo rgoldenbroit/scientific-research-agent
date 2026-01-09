@@ -31,6 +31,15 @@ from .sheets import (
     add_chart_to_spreadsheet,
     get_spreadsheet_url,
 )
+from .guidance import (
+    get_organizational_contacts,
+    list_available_domains,
+)
+from .email import (
+    send_email,
+    create_draft,
+    draft_email_content,
+)
 
 __all__ = [
     # BigQuery tools
@@ -56,4 +65,11 @@ __all__ = [
     "create_spreadsheet_with_chart",
     "add_chart_to_spreadsheet",
     "get_spreadsheet_url",
+    # Guidance tools
+    "get_organizational_contacts",
+    "list_available_domains",
+    # Email tools
+    "send_email",
+    "create_draft",
+    "draft_email_content",
 ]

@@ -64,9 +64,10 @@ def main():
                 "cloudpickle",
                 "pydantic",
                 "plotly>=5.18.0",
-                "python-dotenv"
+                "python-dotenv",
+                "pyyaml>=6.0"
             ],
-            "extra_packages": ["./agents", "./tools"],
+            "extra_packages": ["./agents", "./tools", "./config"],
             "staging_bucket": STAGING_BUCKET,
             "env_vars": {
                 "PROJECT_ID": PROJECT_ID,

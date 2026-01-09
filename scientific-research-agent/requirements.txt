@@ -24,3 +24,4 @@ plotly>=5.18.0  # Interactive HTML charts
 cloudpickle
 pydantic
 python-dotenv
+pyyaml>=6.0  # For contacts configuration

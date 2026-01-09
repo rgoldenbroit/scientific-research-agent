@@ -1,0 +1,136 @@
+# Organizational Contact Configuration for Research Agent
+# Admin-defined mappings from research domains to team contacts
+#
+# To customize: Edit this file with your organization's teams and contact info.
+# The agent will match research context keywords to domains and suggest relevant contacts.
+
+version: "1.0"
+
+# Default contact when no domain matches
+default:
+  team_name: "Research Support Office"
+  purpose: "General research assistance and project coordination"
+  email: "research-support@organization.edu"
+  link: "https://research.organization.edu/support"
+  action_items:
+    - "Submit research summary for internal review"
+    - "Schedule consultation with research coordinator"
+    - "Review institutional policies for your research area"
+
+# Domain-specific contact mappings
+domains:
+  cancer:
+    keywords:
+      - "cancer"
+      - "oncology"
+      - "tumor"
+      - "carcinoma"
+      - "TCGA"
+      - "metastasis"
+      - "chemotherapy"
+      - "malignant"
+      - "neoplasm"
+    contacts:
+      - team_name: "Cancer Research Institute"
+        purpose: "Clinical translation and patient cohort access"
+        email: "cancer-research@organization.edu"
+        link: "https://cancer.organization.edu/collaborate"
+        action_items:
+          - "Request IRB consultation for patient data access"
+          - "Submit preliminary findings for translational review"
+          - "Schedule meeting with clinical oncology team"
+      - team_name: "Institutional Review Board (IRB)"
+        purpose: "Ethics approval for human subjects research"
+        email: "irb@organization.edu"
+        link: "https://irb.organization.edu"
+        action_items:
+          - "Determine if IRB approval is required for your study"
+          - "Submit protocol for ethics review"
+          - "Complete CITI training if not already certified"
+
+  genomics:
+    keywords:
+      - "genomics"
+      - "sequencing"
+      - "RNA-seq"
+      - "mutation"
+      - "expression"
+      - "variant"
+      - "gene"
+      - "DNA"
+      - "genome"
+      - "transcriptome"
+    contacts:
+      - team_name: "Genomics Core Facility"
+        purpose: "Sequencing services and bioinformatics support"
+        email: "genomics-core@organization.edu"
+        link: "https://genomics.organization.edu"
+        action_items:
+          - "Request sequencing quote for validation experiments"
+          - "Schedule bioinformatics consultation"
+          - "Submit samples for library preparation"
+      - team_name: "Biostatistics Core"
+        purpose: "Statistical analysis support for genomic studies"
+        email: "biostats@organization.edu"
+        link: "https://biostats.organization.edu"
+        action_items:
+          - "Request power analysis for proposed study"
+          - "Consult on multi-omics integration approaches"
+          - "Review statistical methods for publication"
+
+  clinical:
+    keywords:
+      - "clinical"
+      - "patient"
+      - "treatment"
+      - "survival"
+      - "outcome"
+      - "trial"
+      - "therapeutic"
+      - "prognosis"
+      - "diagnosis"
+    contacts:
+      - team_name: "Clinical Research Office"
+        purpose: "IRB approval and clinical trial coordination"
+        email: "clinical-research@organization.edu"
+        link: "https://clinical.organization.edu"
+        action_items:
+          - "Initiate IRB application process"
+          - "Review protocol with regulatory team"
+          - "Identify potential clinical collaborators"
+      - team_name: "Compliance Team"
+        purpose: "HIPAA compliance and data governance"
+        email: "compliance@organization.edu"
+        link: "https://compliance.organization.edu"
+        action_items:
+          - "Complete data use agreement (DUA) if accessing PHI"
+          - "Review de-identification requirements"
+          - "Ensure secure data storage protocols"
+
+  data_science:
+    keywords:
+      - "machine learning"
+      - "AI"
+      - "model"
+      - "prediction"
+      - "algorithm"
+      - "deep learning"
+      - "neural network"
+      - "classification"
+    contacts:
+      - team_name: "Data Science & AI Team"
+        purpose: "ML model development and validation support"
+        email: "data-science@organization.edu"
+        link: "https://ds.organization.edu"
+        action_items:
+          - "Request computational resources allocation"
+          - "Schedule model review session"
+          - "Submit for reproducibility audit"
+      - team_name: "High-Performance Computing (HPC)"
+        purpose: "Compute resources for large-scale analyses"
+        email: "hpc@organization.edu"
+        link: "https://hpc.organization.edu"
+        action_items:
+          - "Request HPC account and allocation"
+          - "Attend HPC orientation session"
+          - "Review available GPU resources for training"

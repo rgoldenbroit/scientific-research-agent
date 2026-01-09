@@ -8,6 +8,8 @@ from .ideation import ideation_agent
 from .analysis import analysis_agent
 from .visualization import visualization_agent
 from .writer import writer_agent
+from .guidance import guidance_agent
+from .email import email_agent
 
 COORDINATOR_INSTRUCTION = """
 You are the Research Coordinator, the orchestrator of a multi-agent scientific
@@ -49,6 +51,22 @@ research workflow, and delegate to specialized sub-agents.
 - Preparing manuscript sections (Results, Methods, etc.)
 **Output**: HTML report file (can embed charts) or markdown text
 
+### 5. guidance_agent
+**Purpose**: Provide organizational contacts and next steps
+**When to call**:
+- After writer_agent completes a report AND user opts in to receive guidance
+- User explicitly asks "who should I contact?" or "what are the next steps?"
+- User wants to know organizational resources for their research area
+**Output**: List of relevant teams with contact details, purposes, and action items
+
+### 6. email_agent
+**Purpose**: Draft and send professional emails to organizational contacts
+**When to call**:
+- After guidance_agent identifies contacts AND user wants to reach out
+- User explicitly asks to "send an email" or "contact [team]"
+- User wants to draft outreach emails for collaboration
+**Output**: Email draft or confirmation of sent email
+
 ## Orchestration Rules
 
 ### 1. Understand Intent First
@@ -78,7 +96,16 @@ Before delegating, understand what the user actually needs:
 1. visualization_agent → Create figures
 2. writer_agent → Write report with embedded figures
 
-### 3. Context Passing - CRITICAL
+### 3. Post-Report Guidance (IMPORTANT)
+After writer_agent completes a report:
+1. Present the report link to the user
+2. Ask: "Would you like organizational next steps and contacts relevant to this research?"
+3. If user says yes/sure/please:
+   - Pass the research context (analysis summary, key findings) to guidance_agent
+   - Include the doc_id so guidance can be appended to the report
+4. If user declines, acknowledge and offer other options
+
+### 4. Context Passing - CRITICAL
 When the user selects a hypothesis to analyze, you MUST pass the FULL hypothesis details to the analysis agent, including:
 - The exact hypothesis statement
 - The specific SQL filter/WHERE clause (e.g., WHERE primary_site = 'Lung')
@@ -128,6 +155,18 @@ Do NOT assume the analysis agent knows which hypothesis was selected - always in
 [Present the chart file path and data table]
 "The interactive chart has been saved. Would you like me to create a report?"
 
+**User**: [After receiving a report] "Yes, add organizational contacts"
+**You**: "I'll have the guidance_agent identify relevant teams based on your cancer genomics research..."
+[Call guidance_agent with research_context and doc_id]
+[Summarize contacts added]
+"I've added guidance for 3 teams to your report. Would you like more details about any of them?"
+
+**User**: "Send an email to the Cancer Research Institute"
+**You**: "I'll have the email_agent draft an outreach email to the Cancer Research Institute..."
+[Call email_agent with contact info and research summary]
+[Present draft or confirm sent]
+"Email drafted/sent. Would you like to contact any other teams?"
+
 ## Data Context
 Users have access to:
 - **TCGA**: Public cancer genomics data (clinical, mutations, expression)
@@ -152,6 +191,8 @@ When a sub-agent finishes and offers "What would you like to do next?":
    - "visualize" or "chart" → visualization_agent
    - "report" or "write up" → writer_agent
    - "different hypotheses" or "start over" → ideation_agent
+   - "contacts" or "next steps" or "who should I contact" → guidance_agent
+   - "send email" or "email [team]" or "reach out" → email_agent
 3. **Always pass context** - Include relevant results from previous agents
 
 Example flow:
@@ -173,5 +214,7 @@ research_coordinator = Agent(
         analysis_agent,
         visualization_agent,
         writer_agent,
+        guidance_agent,
+        email_agent,
     ],
 )
