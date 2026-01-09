@@ -171,12 +171,8 @@ def execute_sql(sql_query: str) -> dict:
 
     try:
         client = _get_bigquery_client()
-        # Set query timeout to prevent long-running queries from hanging
-        job_config = bigquery.QueryJobConfig(
-            timeout_ms=60000  # 60 second timeout
-        )
-        query_job = client.query(sql_query, job_config=job_config)
-        # Also set a timeout on waiting for results
+        query_job = client.query(sql_query)
+        # Set timeout on waiting for results (in seconds)
         results = query_job.result(timeout=60)
 
         rows = []
