@@ -3,6 +3,7 @@ Plotly chart generation tools for interactive HTML visualizations.
 Creates local HTML files and optionally uploads to Google Drive for shareable links.
 """
 import os
+import functools
 from datetime import datetime
 from pathlib import Path
 
@@ -10,6 +11,24 @@ import plotly.graph_objects as go
 import plotly.express as px
 
 from tools.gcs import upload_html_to_gcs
+
+
+def safe_tool(func):
+    """Decorator that ensures a tool ALWAYS returns a dict response."""
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        try:
+            result = func(*args, **kwargs)
+            if not isinstance(result, dict):
+                return {"status": "success", "result": result}
+            return result
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": f"⚠️ TOOL ERROR in {func.__name__}: {str(e)}",
+                "exception_type": type(e).__name__
+            }
+    return wrapper
 
 # Default output directory - relative to project root
 DEFAULT_OUTPUT_DIR = os.path.join(
@@ -39,6 +58,7 @@ def _generate_filename(title: str, prefix: str = "chart") -> str:
     return f"{prefix}_{safe_title}_{timestamp}"
 
 
+@safe_tool
 def create_plotly_chart(
     data: dict,
     chart_type: str = "bar",
@@ -175,6 +195,7 @@ def create_plotly_chart(
         }
 
 
+@safe_tool
 def create_kaplan_meier_chart(
     survival_data: dict,
     title: str = "Survival Analysis",
@@ -278,6 +299,7 @@ def create_kaplan_meier_chart(
         return {"status": "error", "message": f"Failed to create K-M chart: {str(e)}"}
 
 
+@safe_tool
 def create_html_report(
     title: str,
     sections: list,
@@ -463,6 +485,7 @@ def create_html_report(
         return {"status": "error", "message": f"Failed to create report: {str(e)}"}
 
 
+@safe_tool
 def list_output_files(output_dir: str = None) -> dict:
     """
     List all generated output files in the output directory.

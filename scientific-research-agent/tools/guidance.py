@@ -3,9 +3,28 @@ Guidance tools for organizational contact lookup and domain matching.
 Provides researchers with next steps and relevant team contacts based on their research domain.
 """
 import os
+import functools
 from typing import Optional, List, Dict, Any
 
 import yaml
+
+
+def safe_tool(func):
+    """Decorator that ensures a tool ALWAYS returns a dict response."""
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        try:
+            result = func(*args, **kwargs)
+            if not isinstance(result, dict):
+                return {"status": "success", "result": result}
+            return result
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": f"⚠️ TOOL ERROR in {func.__name__}: {str(e)}",
+                "exception_type": type(e).__name__
+            }
+    return wrapper
 
 # Path to contacts configuration (relative to this file)
 CONFIG_PATH = os.path.join(os.path.dirname(__file__), "..", "config", "contacts.yaml")
@@ -69,6 +88,7 @@ def _format_guidance_text(domains: List[str], contacts: List[Dict]) -> str:
     return "\n".join(lines)
 
 
+@safe_tool
 def get_organizational_contacts(
     research_context: str,
     domains: Optional[List[str]] = None,
@@ -130,6 +150,7 @@ def get_organizational_contacts(
     }
 
 
+@safe_tool
 def list_available_domains() -> dict:
     """
     List all available research domains in the configuration.

@@ -4,11 +4,30 @@ Uses service account authentication (requires domain-wide delegation in Google W
 """
 import os
 import base64
+import functools
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from typing import Optional, List
 
 from google.auth import default
+
+
+def safe_tool(func):
+    """Decorator that ensures a tool ALWAYS returns a dict response."""
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        try:
+            result = func(*args, **kwargs)
+            if not isinstance(result, dict):
+                return {"status": "success", "result": result}
+            return result
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": f"⚠️ TOOL ERROR in {func.__name__}: {str(e)}",
+                "exception_type": type(e).__name__
+            }
+    return wrapper
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 
@@ -91,6 +110,7 @@ def _create_message(
     return {"raw": raw}
 
 
+@safe_tool
 def send_email(
     to: str,
     subject: str,
@@ -153,6 +173,7 @@ def send_email(
         }
 
 
+@safe_tool
 def create_draft(
     to: str,
     subject: str,
@@ -218,6 +239,7 @@ def create_draft(
         }
 
 
+@safe_tool
 def draft_email_content(
     recipient_name: str,
     recipient_email: str,

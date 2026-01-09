@@ -2,11 +2,35 @@
 BigQuery tools for data querying and schema inspection.
 """
 import os
+import functools
 from google.cloud import bigquery
 
 # BigQuery configuration - set via environment variables
 BQ_PROJECT = os.environ.get("GOOGLE_CLOUD_PROJECT", "")
 BQ_DATASET = os.environ.get("AGENT_BQ_DATASET", "research_agent_data")
+
+
+def safe_tool(func):
+    """
+    Decorator that ensures a tool ALWAYS returns a dict response.
+    This prevents the ADK 'function response parts mismatch' error.
+    """
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        try:
+            result = func(*args, **kwargs)
+            # Ensure result is always a dict
+            if not isinstance(result, dict):
+                return {"status": "success", "result": result}
+            return result
+        except Exception as e:
+            # Catch ANY exception and return it as a proper response
+            return {
+                "status": "error",
+                "message": f"⚠️ TOOL ERROR in {func.__name__}: {str(e)}",
+                "exception_type": type(e).__name__
+            }
+    return wrapper
 
 
 def _get_bigquery_client():
@@ -87,6 +111,7 @@ def _upload_to_bigquery(data_rows: list, table_name: str, features: list, groups
     return table_id
 
 
+@safe_tool
 def list_table_ids() -> dict:
     """
     List all BigQuery tables in the research_agent_data dataset.
@@ -113,6 +138,7 @@ def list_table_ids() -> dict:
         return {"status": "error", "message": str(e)}
 
 
+@safe_tool
 def get_table_info(table_name: str) -> dict:
     """
     Get schema and row count for a BigQuery table.
@@ -152,6 +178,7 @@ def get_table_info(table_name: str) -> dict:
         return {"status": "error", "message": str(e)}
 
 
+@safe_tool
 def execute_sql(sql_query: str) -> dict:
     """
     Execute a SQL query against BigQuery and return results.
@@ -222,6 +249,7 @@ def execute_sql(sql_query: str) -> dict:
         }
 
 
+@safe_tool
 def get_bigquery_schema(dataset_path: str = None) -> dict:
     """
     Get schema information for TCGA or other public BigQuery datasets.

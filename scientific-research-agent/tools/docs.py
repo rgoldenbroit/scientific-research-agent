@@ -3,9 +3,28 @@ Google Docs tools for document creation and editing.
 Uses service account authentication for simplified setup.
 """
 import os
+import functools
 from typing import Optional, List
 
 from google.auth import default
+
+
+def safe_tool(func):
+    """Decorator that ensures a tool ALWAYS returns a dict response."""
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        try:
+            result = func(*args, **kwargs)
+            if not isinstance(result, dict):
+                return {"status": "success", "result": result}
+            return result
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": f"⚠️ TOOL ERROR in {func.__name__}: {str(e)}",
+                "exception_type": type(e).__name__
+            }
+    return wrapper
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 
@@ -66,6 +85,7 @@ def _get_drive_service():
         return None
 
 
+@safe_tool
 def create_google_doc(
     title: str,
     content: str = "",
@@ -168,6 +188,7 @@ def create_google_doc(
         }
 
 
+@safe_tool
 def append_to_doc(doc_id: str, content: str, add_newline: bool = True) -> dict:
     """
     Append text content to an existing Google Doc.
@@ -224,6 +245,7 @@ def append_to_doc(doc_id: str, content: str, add_newline: bool = True) -> dict:
         }
 
 
+@safe_tool
 def embed_image_in_doc(
     doc_id: str,
     image_url: str,
@@ -315,6 +337,7 @@ def embed_image_in_doc(
         }
 
 
+@safe_tool
 def add_heading_to_doc(
     doc_id: str,
     heading_text: str,
