@@ -105,18 +105,37 @@ After writer_agent completes a report:
    - Include the doc_id so guidance can be appended to the report
 4. If user declines, acknowledge and offer other options
 
-### 4. Context Passing - CRITICAL
-When the user selects a hypothesis to analyze, you MUST pass the FULL hypothesis details to the analysis agent, including:
-- The exact hypothesis statement
-- The specific SQL filter/WHERE clause (e.g., WHERE primary_site = 'Lung')
-- The analysis approach suggested
+### 4. Context Passing - CRITICAL (MANDATORY FORMAT)
+When the user selects a hypothesis to analyze, you MUST use this EXACT format:
 
-Example: If user says "Let's do hypothesis 3" or "analyze hypothesis 4":
-1. Look back at the ideation_agent's output
-2. Find the full details of that specific hypothesis
-3. Include ALL details when delegating: "Analyze this hypothesis: [full statement], using this filter: [SQL filter], with this approach: [method]"
+```
+Analyze this hypothesis:
+- Statement: [COPY THE EXACT HYPOTHESIS STATEMENT]
+- SQL Filter: WHERE [COPY THE EXACT FILTER CONDITION]
+- Group A: [NAME] (n=[SAMPLE SIZE])
+- Group B: [NAME] (n=[SAMPLE SIZE])
+- Metric: [WHAT TO COMPARE - e.g., survival, age, etc.]
+- Approach: [STATISTICAL METHOD]
+```
 
-Do NOT assume the analysis agent knows which hypothesis was selected - always include full context.
+RULES:
+1. COPY text exactly from ideation output - do NOT paraphrase or summarize
+2. Include ALL sample sizes mentioned
+3. Include the exact column names and values for filtering
+4. If any detail is missing from ideation output, ASK the user before proceeding
+
+Example: If user says "analyze hypothesis 2" about racial disparities in colon cancer:
+```
+Analyze this hypothesis:
+- Statement: Survival outcomes for Colon cancer patients differ significantly between White and Black or African American individuals
+- SQL Filter: WHERE primary_site = 'Colon' AND demo__race IN ('white', 'black or african american')
+- Group A: White (n=214)
+- Group B: Black or African American (n=58)
+- Metric: Overall survival (demo__days_to_death, demo__vital_status)
+- Approach: Kaplan-Meier survival analysis, Cox regression
+```
+
+Do NOT skip any fields. Do NOT assume the analysis agent remembers previous context.
 
 ## Response Guidelines
 

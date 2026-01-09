@@ -166,7 +166,19 @@ def execute_sql(sql_query: str) -> dict:
     if not BQ_PROJECT:
         return {
             "status": "error",
-            "message": "BigQuery project not configured. The GOOGLE_CLOUD_PROJECT environment variable is not set. Please ensure the .env file is loaded or set the environment variable."
+            "message": "⚠️ QUERY FAILED: BigQuery project not configured. The GOOGLE_CLOUD_PROJECT environment variable is not set."
+        }
+
+    # Validate query has LIMIT or is an aggregate to prevent timeouts
+    sql_upper = sql_query.upper()
+    is_aggregate = any(agg in sql_upper for agg in ["COUNT(", "SUM(", "AVG(", "MIN(", "MAX(", "GROUP BY"])
+    has_limit = "LIMIT" in sql_upper
+
+    if not has_limit and not is_aggregate:
+        return {
+            "status": "error",
+            "message": "⚠️ QUERY REJECTED: Query must include LIMIT clause or be an aggregate query. Add 'LIMIT 1000' to prevent timeouts.",
+            "suggestion": "Rewrite query with: SELECT ... FROM ... WHERE ... LIMIT 1000"
         }
 
     try:
@@ -187,16 +199,27 @@ def execute_sql(sql_query: str) -> dict:
         }
     except Exception as e:
         error_msg = str(e)
+        suggestion = "Try a simpler query."
+
         # Provide more context for common errors
         if "timeout" in error_msg.lower() or "Timeout" in error_msg:
-            error_msg = f"Query timed out after 60 seconds. Try simplifying the query or adding LIMIT clause: {error_msg}"
+            error_msg = f"Query timed out after 60 seconds: {error_msg}"
+            suggestion = "Add LIMIT 100 clause and select fewer columns."
         elif "403" in error_msg or "Access Denied" in error_msg:
-            error_msg = f"BigQuery access denied: {error_msg}. Check that the service account has BigQuery permissions."
+            error_msg = f"BigQuery access denied: {error_msg}"
+            suggestion = "Check that the service account has BigQuery Data Viewer role."
         elif "404" in error_msg or "Not found" in error_msg:
-            error_msg = f"Table or dataset not found: {error_msg}. Verify the table path is correct (project.dataset.table)."
+            error_msg = f"Table or dataset not found: {error_msg}"
+            suggestion = "Verify the table path is correct (project.dataset.table)."
         elif "400" in error_msg:
-            error_msg = f"Invalid SQL query: {error_msg}. Check SQL syntax and column names."
-        return {"status": "error", "message": error_msg}
+            error_msg = f"Invalid SQL syntax: {error_msg}"
+            suggestion = "Check column names and SQL syntax. Use get_bigquery_schema to verify column names."
+
+        return {
+            "status": "error",
+            "message": f"⚠️ QUERY FAILED: {error_msg}",
+            "suggestion": suggestion
+        }
 
 
 def get_bigquery_schema(dataset_path: str = None) -> dict:
