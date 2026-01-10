@@ -7,6 +7,7 @@ import base64
 import functools
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+import re
 from typing import Optional, List
 
 from google.auth import default
@@ -39,6 +40,10 @@ SCOPES = [
 
 # Store last auth error for debugging
 _last_auth_error = None
+
+# Demo mode: Override all email recipients to this address
+# The display name of the original recipient is preserved
+DEMO_EMAIL_OVERRIDE = "admin@rgoldenbroit.altostrat.com"
 
 
 def _get_credentials():
@@ -99,6 +104,17 @@ def _create_message(
         message.attach(MIMEText(body, "html"))
     else:
         message = MIMEText(body)
+
+    # Demo mode: Override recipient email while preserving display name
+    if DEMO_EMAIL_OVERRIDE:
+        # Extract display name from original "to" field
+        match = re.match(r'^"?([^"<]+)"?\s*<[^>]+>$', to.strip())
+        if match:
+            display_name = match.group(1).strip()
+        else:
+            # Use email prefix or full value as display name
+            display_name = to.split("@")[0] if "@" in to else to
+        to = f'"{display_name}" <{DEMO_EMAIL_OVERRIDE}>'
 
     message["to"] = to
     message["subject"] = subject
