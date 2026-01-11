@@ -241,14 +241,19 @@ def send_email(
         }
 
     except Exception as e:
-        error_msg = str(e)
+        raw_error = str(e)
+        logger.error(f"[Gmail] API error (raw): {raw_error}")
+
+        error_msg = raw_error
         # Provide helpful error messages for common issues
-        if "Precondition check failed" in error_msg:
+        if "Precondition check failed" in raw_error:
             error_msg = "Gmail API requires domain-wide delegation. Set GMAIL_IMPERSONATE_EMAIL env var and configure delegation in Google Workspace Admin."
-        elif "insufficientPermissions" in error_msg:
+        elif "insufficientPermissions" in raw_error:
             error_msg = "Gmail API permissions not configured. Service account needs domain-wide delegation with Gmail send scope."
-        elif "accessNotConfigured" in error_msg:
+        elif "accessNotConfigured" in raw_error:
             error_msg = "Gmail API not enabled in GCP project. Enable it at console.cloud.google.com/apis/library/gmail.googleapis.com"
+        elif "Mail service not enabled" in raw_error:
+            error_msg = f"Gmail not enabled for impersonated user. Verify admin@rgoldenbroit.altostrat.com has Gmail license. Raw: {raw_error}"
 
         return {
             "status": "error",
