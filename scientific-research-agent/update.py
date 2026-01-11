@@ -62,6 +62,7 @@ def main():
                 "google-adk>=1.1.0",
                 "google-cloud-storage",
                 "google-cloud-bigquery",
+                "google-cloud-secret-manager",  # For Gmail SA key access
                 "google-api-python-client",
                 "google-auth-oauthlib",
                 "scipy",
@@ -83,6 +84,7 @@ def main():
                 "AGENT_BQ_DATASET": BQ_DATASET,
                 "ENABLE_DRIVE_UPLOAD": "true",
                 "GMAIL_IMPERSONATE_EMAIL": "admin@rgoldenbroit.altostrat.com",
+                "GMAIL_SA_KEY_SECRET": f"projects/{PROJECT_ID}/secrets/gmail-sa-key/versions/latest",
             }
         }
     )

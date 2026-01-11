@@ -5,6 +5,7 @@ Uses service account authentication (requires domain-wide delegation in Google W
 import os
 import base64
 import functools
+import json
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import re
@@ -46,37 +47,92 @@ _last_auth_error = None
 DEMO_EMAIL_OVERRIDE = "admin@rgoldenbroit.altostrat.com"
 
 
+def _log_credential_info(credentials):
+    """Log credential information for debugging domain-wide delegation issues."""
+    info = {
+        "credential_type": type(credentials).__name__,
+        "has_with_subject": hasattr(credentials, 'with_subject'),
+    }
+    if hasattr(credentials, 'service_account_email'):
+        info["service_account_email"] = credentials.service_account_email
+    if hasattr(credentials, '_subject'):
+        info["subject"] = credentials._subject
+    print(f"[Gmail Auth Debug] {info}")
+    return info
+
+
 def _get_credentials():
-    """Get Google credentials for Gmail API with domain-wide delegation support."""
+    """Get Google credentials with domain-wide delegation via Secret Manager.
+
+    Priority order:
+    1. Secret Manager (GMAIL_SA_KEY_SECRET) - preferred for Vertex AI Agent Engine
+    2. File-based key (GOOGLE_APPLICATION_CREDENTIALS) - for local development
+    3. ADC fallback - will log warning if credentials don't support delegation
+    """
     global _last_auth_error
 
-    # Get the email to impersonate from environment (required for domain-wide delegation)
     impersonate_email = os.environ.get("GMAIL_IMPERSONATE_EMAIL")
+    if not impersonate_email:
+        _last_auth_error = "GMAIL_IMPERSONATE_EMAIL not set. Required for domain-wide delegation."
+        return None
 
+    # Method 1: Secret Manager (preferred for Vertex AI Agent Engine)
+    sa_key_secret = os.environ.get("GMAIL_SA_KEY_SECRET")
+    if sa_key_secret:
+        try:
+            from google.cloud import secretmanager
+            client = secretmanager.SecretManagerServiceClient()
+            response = client.access_secret_version(name=sa_key_secret)
+            key_json = json.loads(response.payload.data.decode("UTF-8"))
+
+            credentials = service_account.Credentials.from_service_account_info(
+                key_json, scopes=SCOPES, subject=impersonate_email
+            )
+            _log_credential_info(credentials)
+            _last_auth_error = None
+            return credentials
+        except ImportError as e:
+            # Package not installed - skip this method and try others
+            print(f"[Gmail Auth] secretmanager not available: {e}")
+            _last_auth_error = f"google-cloud-secret-manager not installed"
+        except Exception as e:
+            _last_auth_error = f"Secret Manager auth failed: {str(e)}"
+            print(f"[Gmail Auth] Secret Manager error: {e}")
+
+    # Method 2: File-based key (for local development)
+    sa_key_path = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
+    if sa_key_path and os.path.exists(sa_key_path):
+        try:
+            credentials = service_account.Credentials.from_service_account_file(
+                sa_key_path, scopes=SCOPES, subject=impersonate_email
+            )
+            _log_credential_info(credentials)
+            _last_auth_error = None
+            return credentials
+        except Exception as e:
+            _last_auth_error = f"File auth failed: {str(e)}"
+            print(f"[Gmail Auth] File-based key error: {e}")
+
+    # Method 3: ADC fallback (log info for debugging even though it won't work for delegation)
     try:
         credentials, project = default(scopes=SCOPES)
+        cred_info = _log_credential_info(credentials)
 
-        # For service accounts, add impersonation if configured
-        if impersonate_email and hasattr(credentials, 'with_subject'):
+        # Warn if ADC credentials won't support delegation
+        if not cred_info.get("has_with_subject"):
+            print(f"[Gmail Auth] WARNING: ADC credentials ({cred_info['credential_type']}) don't support with_subject(). "
+                  f"Domain-wide delegation will fail. Configure GMAIL_SA_KEY_SECRET.")
+
+        if hasattr(credentials, 'with_subject'):
             credentials = credentials.with_subject(impersonate_email)
-
-        _last_auth_error = None
-        return credentials
+            _last_auth_error = None
+            return credentials
+        else:
+            _last_auth_error = (f"ADC credentials ({cred_info['credential_type']}) don't support domain-wide delegation. "
+                              f"Set GMAIL_SA_KEY_SECRET env var with Secret Manager path.")
+            return None
     except Exception as e:
-        _last_auth_error = str(e)
-        sa_key_path = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
-        if sa_key_path and os.path.exists(sa_key_path):
-            try:
-                credentials = service_account.Credentials.from_service_account_file(
-                    sa_key_path, scopes=SCOPES
-                )
-                # Add impersonation for service account key auth
-                if impersonate_email:
-                    credentials = credentials.with_subject(impersonate_email)
-                _last_auth_error = None
-                return credentials
-            except Exception as e2:
-                _last_auth_error = f"Default auth failed: {_last_auth_error}. SA key failed: {str(e2)}"
+        _last_auth_error = f"All auth methods failed. Last error: {str(e)}"
         return None
 
 

@@ -54,6 +54,7 @@ def main():
                 "google-adk>=1.1.0",
                 "google-cloud-storage",
                 "google-cloud-bigquery",
+                "google-cloud-secret-manager",  # For Gmail SA key access
                 "google-api-python-client",
                 "google-auth-oauthlib",
                 "scipy",
@@ -78,6 +79,9 @@ def main():
                 # Requires: 1) Gmail API enabled, 2) Domain-wide delegation on service account,
                 # 3) Scopes authorized in Workspace Admin (admin.google.com)
                 "GMAIL_IMPERSONATE_EMAIL": "admin@rgoldenbroit.altostrat.com",
+                # Secret Manager path to service account key for Gmail domain-wide delegation
+                # Create with: gcloud secrets create gmail-sa-key --data-file=<key.json>
+                "GMAIL_SA_KEY_SECRET": f"projects/{PROJECT_ID}/secrets/gmail-sa-key/versions/latest",
             },
             # Use specific service account with domain-wide delegation configured
             "service_account": "research-agent@second-impact-444322-p8.iam.gserviceaccount.com",

@@ -5,6 +5,7 @@ google-adk>=1.1.0
 # Google Cloud services
 google-cloud-storage
 google-cloud-bigquery
+google-cloud-secret-manager  # For Gmail SA key access
 
 # Google APIs for Drive/Docs
 google-api-python-client
