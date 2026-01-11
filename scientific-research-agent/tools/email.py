@@ -6,12 +6,17 @@ import os
 import base64
 import functools
 import json
+import logging
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import re
 from typing import Optional, List
 
 from google.auth import default
+
+# Configure logging for Cloud Logging visibility
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
 def safe_tool(func):
@@ -57,7 +62,7 @@ def _log_credential_info(credentials):
         info["service_account_email"] = credentials.service_account_email
     if hasattr(credentials, '_subject'):
         info["subject"] = credentials._subject
-    print(f"[Gmail Auth Debug] {info}")
+    logger.info(f"[Gmail Auth Debug] {info}")
     return info
 
 
@@ -90,15 +95,16 @@ def _get_credentials():
                 key_json, scopes=SCOPES, subject=impersonate_email
             )
             _log_credential_info(credentials)
+            logger.info(f"[Gmail Auth] SUCCESS via Secret Manager, impersonating {impersonate_email}")
             _last_auth_error = None
             return credentials
         except ImportError as e:
             # Package not installed - skip this method and try others
             errors.append(f"SecretManager import failed: {e}")
-            print(f"[Gmail Auth] secretmanager not available: {e}")
+            logger.warning(f"[Gmail Auth] secretmanager not available: {e}")
         except Exception as e:
             errors.append(f"SecretManager failed: {e}")
-            print(f"[Gmail Auth] Secret Manager error: {e}")
+            logger.error(f"[Gmail Auth] Secret Manager error: {e}")
 
     # Method 2: File-based key (for local development)
     sa_key_path = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
@@ -112,7 +118,7 @@ def _get_credentials():
             return credentials
         except Exception as e:
             errors.append(f"File auth failed: {e}")
-            print(f"[Gmail Auth] File-based key error: {e}")
+            logger.error(f"[Gmail Auth] File-based key error: {e}")
 
     # Method 3: ADC fallback (log info for debugging even though it won't work for delegation)
     try:
@@ -121,8 +127,8 @@ def _get_credentials():
 
         # Warn if ADC credentials won't support delegation
         if not cred_info.get("has_with_subject"):
-            print(f"[Gmail Auth] WARNING: ADC credentials ({cred_info['credential_type']}) don't support with_subject(). "
-                  f"Domain-wide delegation will fail. Configure GMAIL_SA_KEY_SECRET.")
+            logger.warning(f"[Gmail Auth] ADC credentials ({cred_info['credential_type']}) don't support with_subject(). "
+                          f"Domain-wide delegation will fail. Configure GMAIL_SA_KEY_SECRET.")
 
         if hasattr(credentials, 'with_subject'):
             credentials = credentials.with_subject(impersonate_email)
@@ -135,6 +141,7 @@ def _get_credentials():
 
     # All methods failed - show ALL errors so user can see what went wrong
     _last_auth_error = " | ".join(errors) if errors else "All auth methods failed"
+    logger.error(f"[Gmail Auth] All methods failed: {_last_auth_error}")
     return None
 
 
@@ -208,9 +215,11 @@ def send_email(
         - message_id: Gmail message ID (if successful)
         - thread_id: Gmail thread ID (if successful)
     """
+    logger.info(f"[Gmail] send_email called: to={to}, subject={subject[:50]}...")
     gmail_service = _get_gmail_service()
 
     if not gmail_service:
+        logger.error(f"[Gmail] Authentication failed: {_last_auth_error}")
         return {
             "status": "error",
             "message": f"Could not authenticate with Gmail API. {_last_auth_error or 'Check service account permissions.'}"
