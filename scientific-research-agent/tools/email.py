@@ -70,6 +70,7 @@ def _get_credentials():
     3. ADC fallback - will log warning if credentials don't support delegation
     """
     global _last_auth_error
+    errors = []  # Collect all errors to show the user
 
     impersonate_email = os.environ.get("GMAIL_IMPERSONATE_EMAIL")
     if not impersonate_email:
@@ -93,10 +94,10 @@ def _get_credentials():
             return credentials
         except ImportError as e:
             # Package not installed - skip this method and try others
+            errors.append(f"SecretManager import failed: {e}")
             print(f"[Gmail Auth] secretmanager not available: {e}")
-            _last_auth_error = f"google-cloud-secret-manager not installed"
         except Exception as e:
-            _last_auth_error = f"Secret Manager auth failed: {str(e)}"
+            errors.append(f"SecretManager failed: {e}")
             print(f"[Gmail Auth] Secret Manager error: {e}")
 
     # Method 2: File-based key (for local development)
@@ -110,7 +111,7 @@ def _get_credentials():
             _last_auth_error = None
             return credentials
         except Exception as e:
-            _last_auth_error = f"File auth failed: {str(e)}"
+            errors.append(f"File auth failed: {e}")
             print(f"[Gmail Auth] File-based key error: {e}")
 
     # Method 3: ADC fallback (log info for debugging even though it won't work for delegation)
@@ -128,12 +129,13 @@ def _get_credentials():
             _last_auth_error = None
             return credentials
         else:
-            _last_auth_error = (f"ADC credentials ({cred_info['credential_type']}) don't support domain-wide delegation. "
-                              f"Set GMAIL_SA_KEY_SECRET env var with Secret Manager path.")
-            return None
+            errors.append(f"ADC ({cred_info['credential_type']}) doesn't support delegation")
     except Exception as e:
-        _last_auth_error = f"All auth methods failed. Last error: {str(e)}"
-        return None
+        errors.append(f"ADC failed: {e}")
+
+    # All methods failed - show ALL errors so user can see what went wrong
+    _last_auth_error = " | ".join(errors) if errors else "All auth methods failed"
+    return None
 
 
 def _get_gmail_service():
