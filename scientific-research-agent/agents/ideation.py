@@ -63,7 +63,7 @@ IMPORTANT: Steps 1 and 2 produce NO OUTPUT. Only Step 3 produces output.
 **CONFIRMED WORKING:**
 - `isb-cgc-bq.TCGA.clinical_gdc_current` - Clinical data with:
   - Patient demographics (age, gender, race, ethnicity)
-  - Vital status and survival (days_to_death, days_to_last_follow_up)
+  - Vital status and survival (demo__vital_status, demo__days_to_death)
   - Disease info (primary_site, disease_type)
 
 **TO DISCOVER:** Use get_bigquery_schema to explore:

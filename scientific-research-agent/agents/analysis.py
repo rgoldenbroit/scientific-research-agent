@@ -80,6 +80,7 @@ Key columns include:
 - `demo__age_at_index` - Age at diagnosis
 - `demo__vital_status` - 'Alive' or 'Dead'
 - `demo__days_to_death` - Survival time for deceased patients
+- NOTE: This table only has `demo__days_to_death` for survival time (no follow-up time for alive patients)
 
 ## Verifying Column Names
 If you encounter a column name error or are unsure about column names:
